@@ -120,7 +120,7 @@ function select(id, label, options, selected){
     </span>
   </label>`;
 }
-function loss(id, def="10"){ return field(id,"ロス率（割増）","%",null,def); }
+function loss(id, def="0"){ return field(id,"ロス率（割増）","%",null,def); }
 function resultBox(rows, note){
   return `<div class="result">
     ${rows.map(r=>`<div class="result-row">
@@ -135,18 +135,21 @@ function resultBox(rows, note){
    rows:総段数 cols:総列数 yokoRows:横筋ブロックの段(Set)
    vCols:たて筋を立てる列(Set) 色分け: 並=薄グレー / 横=オレンジ / 角=濃紺 */
 const CB_COLORS = {nami:"#d8d0c0", yoko:"#e08a3c", kado:"#3b4a63", line:"#b8ae9c", steel:"#33404f"};
-function blockDiagram(rows, cols, yokoRows, vCols, kadoCols, aspect){
+function blockDiagram(rows, cols, yokoRows, vCols, kadoCols, aspect, embedRatio){
   if(rows<=0 || cols<=0) return "";
   vCols = vCols || new Set();
   kadoCols = kadoCols || new Set([0, cols-1]);
   aspect = (aspect && aspect>0) ? aspect : (390/190); // 幅/高さ（目地込み）。既定は標準ブロック
+  embedRatio = embedRatio || 0;                       // 壁高さに対する地中埋込みの割合
   const maxW = 560;
   // 横幅から1個の幅を決め、高さは実際の縦横比で算出
   const cellW = Math.max(10, Math.min(46, Math.floor(maxW / cols)));
   const cellH = Math.max(6, Math.round(cellW / aspect));
   const gap = Math.max(1, Math.floor(cellW*0.05));
   const w = cols*(cellW+gap)+gap;
-  const h = rows*(cellH+gap)+gap;
+  const wallH = rows*(cellH+gap)+gap;                 // 壁部分の高さ
+  const embedPx = Math.round(wallH*embedRatio);       // 地中部分の高さ
+  const h = wallH + embedPx;                          // 図全体の高さ
   const classify = (r,c) => {
     if(kadoCols.has(c)) return "kado";        // 角ライン（両端＋出隅）は全段「角」
     if(yokoRows.has(r)) return "yoko";        // 角以外の横筋段は「横」
@@ -162,6 +165,13 @@ function blockDiagram(rows, cols, yokoRows, vCols, kadoCols, aspect){
         fill="${CB_COLORS[kind]}" stroke="${CB_COLORS.line}" stroke-width="0.7"/>`;
     }
   }
+  // 地中部分（基礎）の帯
+  let ground = "";
+  if(embedPx>0){
+    ground = `<rect x="0" y="${wallH}" width="${w}" height="${embedPx}" fill="#e8e0cf"/>
+      <line x1="0" y1="${wallH}" x2="${w}" y2="${wallH}" stroke="#a89e88" stroke-width="1.2" stroke-dasharray="5 3"/>
+      <text x="6" y="${wallH+12}" font-size="9" fill="#7a7364">地中（埋込み）</text>`;
+  }
   // 鉄筋の線（たて筋＝縦目地、よこ筋＝横筋段に水平）
   // vCols には「列位置（小数可）」が入る。X = 左端 + 位置×(1列の幅)
   let steel = "";
@@ -173,8 +183,9 @@ function blockDiagram(rows, cols, yokoRows, vCols, kadoCols, aspect){
     if(pos<=0) cx = gap + colPitch;               // 左端は最初の目地へ
     if(pos>=cols) cx = gap + cols*colPitch;
     cx = Math.min(Math.max(cx, gap+2), w-gap-2);
-    steel += `<line x1="${cx}" y1="${gap}" x2="${cx}" y2="${h-gap}"
-      stroke="${CB_COLORS.steel}" stroke-width="1.6" stroke-linecap="round" opacity="0.7"/>`;
+    // 天端から地中の埋込み下端まで通す
+    steel += `<line x1="${cx}" y1="${gap}" x2="${cx}" y2="${h-2}"
+      stroke="${CB_COLORS.steel}" stroke-width="1.6" stroke-linecap="round" opacity="0.75"/>`;
   }
   for(const r of yokoRows){
     const y = gap + (rows-1-r)*(cellH+gap) + cellH/2;
@@ -188,6 +199,7 @@ function blockDiagram(rows, cols, yokoRows, vCols, kadoCols, aspect){
       <svg viewBox="0 0 ${w} ${h}" width="${dw}" height="${h*dw/w}"
            xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ブロック配置図">
         <rect width="${w}" height="${h}" fill="#fff"/>
+        ${ground}
         ${cells}
         ${steel}
       </svg>
@@ -412,20 +424,20 @@ function renderBlock(){
         {v:"top",     t:"最上段（天端）のみ"},
         {v:"interval",t:"一定段ごと"},
       ],"top")}
-      <div class="grid2">${field("bw_yint","何段ごとに入れるか","段ごと",null,"3")}${loss("bw_loss","5")}</div>
+      <div class="grid2">${field("bw_yint","何段ごとに入れるか","段ごと",null,"3")}${loss("bw_loss","0")}</div>
       ${select("bw_vspace","たて筋の間隔",[
-        {v:"perblock",t:"縦目地ごと（各縦ラインに1本）"},
         {v:"40",      t:"40cmごと（空洞2つに1本）"},
         {v:"80",      t:"80cmごと（空洞4つに1本）"},
       ],"40")}
+      ${field("bw_embed","たて筋の地中埋込み","cm",null,"20")}
       <div id="bw_out"></div>`,
     linear: () => `
       <div class="grid2">${field("bl_len","施工延長","m","20")}${field("bl_u","製品1本の長さ","mm",null,"600")}</div>
-      ${loss("bl_loss","3")}<div id="bl_out"></div>`,
+      ${loss("bl_loss","0")}<div id="bl_out"></div>`,
     paver: () => `
       ${field("bp_area","施工面積","m²","10")}
       <div class="grid3">${field("bp_w","平板 幅","mm",null,"300")}${field("bp_l","平板 長さ","mm",null,"300")}${field("bp_j","目地","mm",null,"0")}</div>
-      ${loss("bp_loss","5")}<div id="bp_out"></div>`,
+      ${loss("bp_loss","0")}<div id="bp_out"></div>`,
   };
   const calcs = {
     block: () => {
@@ -482,11 +494,14 @@ function renderBlock(){
       // ---- 鉄筋量の概算 ----
       const wallW=num("bw_w"), wallH=num("bw_h");
       const vspace=$("#bw_vspace").value;
-      // たて筋間隔(m)：縦目地ごと=ブロック長さピッチ, 40cm, 80cm
-      const pitchM = vspace==="perblock" ? uw : (vspace==="40" ? 0.4 : 0.8);
+      const embedM = num("bw_embed")/100;          // 地中埋込み(cm→m)
+      // たて筋間隔(m)：40cm または 80cm
+      const pitchM = vspace==="40" ? 0.4 : 0.8;
       // たて筋本数：端部にも入れるため +1、さらに出隅にも1本ずつ
       const vBars = (pitchM>0 && wallW>0) ? Math.floor(wallW/pitchM)+1+corners : 0;
-      const vLen = vBars * wallH;                 // たて筋 総長さ（定着・基礎埋込は別途）
+      // たて筋1本の長さ = 壁の高さ + 地中埋込み
+      const vBarLen = wallH + embedM;
+      const vLen = vBars * vBarLen;               // たて筋 総長さ（埋込み込み・重ね継手は別途）
       // よこ筋：横筋段ごとに壁幅いっぱい1本（出隅は通しでも継手が入るため本数は段数どおり）
       const hBars = hrows;
       const hLen = hBars * wallW;                 // よこ筋 総長さ（重ね継手は別途）
@@ -514,9 +529,10 @@ function renderBlock(){
         {label:"形状 ／ 段数 × 列数", value:`${shapeNote} ／ ${fmt(rows,0)} × ${fmt(cols,0)}`, unit:""},
         {label:"充填モルタル(目安)", value:fmt(fillL,0), unit:"L"},
         {label:"たて筋", value:`${fmt(vBars,0)}本 ／ 総${fmt(vLen,1)}m`, unit:""},
+        {label:"　└ 1本の長さ", value:`${fmt(vBarLen,2)}m（壁${fmt(wallH,2)}＋埋込${fmt(embedM,2)}）`, unit:""},
         {label:"よこ筋", value:`${fmt(hBars,0)}本 ／ 総${fmt(hLen,1)}m`, unit:""},
-      ], `${placeNote}。${shapeNote}の塀で、角ブロック＝両端＋出隅の縦ライン（計${kadoColCount}ライン×全段）、横ブロック＝横筋段の中間、残りが並。充填約${type.fillPerBlock}L/個（全充填目安）。たて筋は${vspace==="perblock"?"縦目地ごと":vspace+"cmごと"}に出隅分を加え${fmt(vBars,0)}本、よこ筋は横筋段ごとに壁幅1本。総延長は塀を一直線に展開した長さで入力してください。鉄筋の総長さは正味で、定着・重ね継手は別途。ロス${fmt(num("bw_loss"),0)}%はブロック数のみ反映。`)
-        + blockDiagram(rows, cols, yokoRows, vCols, kadoCols, uw/uh);
+      ], `${placeNote}。${shapeNote}の塀で、角ブロック＝両端＋出隅の縦ライン（計${kadoColCount}ライン×全段）、横ブロック＝横筋段の中間、残りが並。充填約${type.fillPerBlock}L/個（全充填目安）。たて筋は${vspace}cmごとに出隅分を加え${fmt(vBars,0)}本、1本あたり壁の高さ＋地中埋込み${fmt(num("bw_embed"),0)}cm。よこ筋は横筋段ごとに壁幅1本。総延長は塀を一直線に展開した長さで入力してください。重ね継手長さは別途加算してください。`)
+        + blockDiagram(rows, cols, yokoRows, vCols, kadoCols, uw/uh, wallH>0 ? embedM/wallH : 0);
       // 「最上段のみ」の時は段間隔入力を無効化
       const yint=$("#bw_yint");
       if(yint){ const off=ymode==="top"; yint.disabled=off; yint.style.opacity=off?"0.45":"1"; }
@@ -545,15 +561,20 @@ function renderBlock(){
 }
 
 /* =====================================================================
-   3. 鉄筋・メッシュ・ラス
+   3. メッシュ・鉄筋・ラス
 ===================================================================== */
 const WEIGHT = {D10:0.56, D13:0.995, D16:1.56, D19:2.25, D22:3.04};
-// ワイヤーメッシュの規格（線径・シート寸法）
+// ワイヤーメッシュの規格（線径・シート寸法・重ね代mm）
+// 重ね代 = 網目ピッチ + 端の出寸法
+//   φ3.2 1.0×2.0m : 100 + 50 = 150mm
+//   φ5.0 1.0×2.0m : 150 + 50 = 200mm
+//   φ6   1.0×2.0m : 150 + 50 = 200mm
+//   φ6   1.5×3.0m : 150 + 75 = 225mm
 const MESH_SPECS = {
-  m32:   {t:"φ3.2mm　1m×2m",   w:1.0, l:2.0},
-  m50:   {t:"φ5.0mm　1m×2m",   w:1.0, l:2.0},
-  m60:   {t:"φ6mm　1m×2m",     w:1.0, l:2.0},
-  m60big:{t:"φ6mm　1.5m×3m",   w:1.5, l:3.0},
+  m32:   {t:"φ3.2mm　1m×2m",   w:1.0, l:2.0, ov:150},
+  m50:   {t:"φ5.0mm　1m×2m",   w:1.0, l:2.0, ov:200},
+  m60:   {t:"φ6mm　1m×2m",     w:1.0, l:2.0, ov:200},
+  m60big:{t:"φ6mm　1.5m×3m",   w:1.5, l:3.0, ov:225},
 };
 // 鉄筋の規格（径・定尺）
 const REBAR_SPECS = {
@@ -563,14 +584,22 @@ const REBAR_SPECS = {
   d13_5: {t:"D13mm × 5m", size:"D13", len:5},
   d16_5: {t:"D16mm × 5m", size:"D16", len:5},
 };
+// ラスの規格（シート寸法・重ね代mm）
+// 重ね代0mmなら 平ラス=3枚/坪、ダブルラス=2枚/坪 に相当する寸法
+// 1坪 = 3.30579 ㎡
+const TSUBO = 3.30579;
+const LATH_SPECS = {
+  flat:   {t:"平ラス　610×1829mm",     w:0.610, l:1.829, ov:0},
+  double: {t:"ダブルラス　965×1870mm", w:0.965, l:1.870, ov:0},
+};
 function renderRebar(){
   $("#main").innerHTML = `<section class="card">
-    <h2>鉄筋・メッシュ・ラス</h2>
+    <h2>メッシュ・鉄筋・ラス</h2>
     ${select("r_mode","種類",[
-      {v:"rebar",t:"鉄筋（格子配筋）"},
       {v:"mesh", t:"ワイヤーメッシュ"},
-      {v:"lath", t:"ラス（メタルラス・波形ラス）"},
-    ],"rebar")}
+      {v:"rebar",t:"鉄筋（格子配筋）"},
+      {v:"lath", t:"ラス（平ラス・ダブルラス）"},
+    ],"mesh")}
     <div id="r_body"></div>
   </section>`;
   const mode = () => $("#r_mode").value;
@@ -580,16 +609,17 @@ function renderRebar(){
       <div class="grid2">${field("rb_w","幅","m","5")}${field("rb_h","高さ／長さ","m","3")}</div>
       ${field("rb_p","配筋ピッチ","mm",null,"200")}
       <label class="check"><input type="checkbox" id="rb_both"><span class="field-label">ダブル配筋（両面）</span></label>
-      ${loss("rb_loss","5")}<div id="rb_out"></div>`,
+      ${loss("rb_loss","0")}<div id="rb_out"></div>`,
     mesh: () => `
       ${select("rm_spec","メッシュの規格",Object.keys(MESH_SPECS).map(k=>({v:k,t:MESH_SPECS[k].t})),"m60")}
       ${field("rm_area","施工面積","m²","50")}
-      <div class="grid2">${field("rm_ov","重ね代","%",null,"10")}${loss("rm_loss","5")}</div>
+      <div class="grid2">${field("rm_ov","重ね代（縦横とも）","mm",null,"150")}${loss("rm_loss","0")}</div>
       <div id="rm_out"></div>`,
     lath: () => `
-      ${field("rl_area","施工面積","m²","30")}
-      <div class="grid3">${field("rl_w","ラス幅","m",null,"0.9")}${field("rl_l","ラス長さ","m",null,"2.0")}${field("rl_ov","重ね代","%",null,"10")}</div>
-      ${loss("rl_loss","5")}<div id="rl_out"></div>`,
+      ${select("rl_spec","ラスの種類",Object.keys(LATH_SPECS).map(k=>({v:k,t:LATH_SPECS[k].t})),"flat")}
+      <div class="grid2">${field("rl_area","施工面積","m²","30")}${field("rl_ov","重ね代（縦横とも）","mm",null,"0")}</div>
+      ${loss("rl_loss","0")}
+      <div id="rl_out"></div>`,
   };
   const calcs = {
     rebar: () => {
@@ -615,28 +645,50 @@ function renderRebar(){
     },
     mesh: () => {
       const spec=MESH_SPECS[$("#rm_spec").value];
-      const ov=num("rm_ov")/100, l=num("rm_loss")/100;
-      const sa=spec.w*spec.l*(1-ov)*(1-ov);
+      const ovM=num("rm_ov")/1000, l=num("rm_loss")/100;   // 重ね代 mm→m
+      // 有効寸法 = シート寸法 − 重ね代（縦横それぞれ）
+      const effW=Math.max(spec.w-ovM, 0), effL=Math.max(spec.l-ovM, 0);
+      const sa=effW*effL;                                   // 1枚の有効面積
       const count=ceilN(sa>0?(num("rm_area")/sa)*(1+l):0);
       $("#rm_out").innerHTML = resultBox([
         {label:"必要枚数", value:fmt(count,0), unit:"枚"},
-        {label:"シート寸法", value:`${fmt(spec.w,1)}×${fmt(spec.l,1)}`, unit:"m"},
-        {label:"1枚有効面積", value:fmt(sa,2), unit:"m²"},
-      ], "重ね代は縦横それぞれに適用した目安です。")
-        + sheetDiagram(spec.w, spec.l, count, "枚");
+        {label:"シート寸法", value:`${fmt(spec.w,2)}×${fmt(spec.l,2)}`, unit:"m"},
+        {label:"有効寸法", value:`${fmt(effW,3)}×${fmt(effL,3)}`, unit:"m"},
+        {label:"1枚有効面積", value:fmt(sa,3), unit:"m²"},
+      ], `重ね代${fmt(num("rm_ov"),0)}mmを縦・横それぞれの寸法から差し引いた有効面積で算出しています。（${fmt(spec.l,2)}−${fmt(ovM,3)}）×（${fmt(spec.w,2)}−${fmt(ovM,3)}）＝${fmt(sa,3)}㎡。規格を変えると重ね代の目安も切り替わります。`)
+        + sheetDiagram(effW, effL, count, "枚");
     },
     lath: () => {
-      const ov=num("rl_ov")/100, l=num("rl_loss")/100;
-      const sa=num("rl_w")*num("rl_l")*(1-ov);
-      const count=ceilN(sa>0?(num("rl_area")/sa)*(1+l):0);
+      const spec=LATH_SPECS[$("#rl_spec").value];
+      const ovM=num("rl_ov")/1000, l=num("rl_loss")/100;   // 重ね代 mm→m
+      // 有効寸法 = シート寸法 − 重ね代（縦横それぞれ）
+      const effW=Math.max(spec.w-ovM, 0), effL=Math.max(spec.l-ovM, 0);
+      const sa=effW*effL;                                   // 1枚の有効面積
+      const area=num("rl_area");
+      const count=ceilN(sa>0?(area/sa)*(1+l):0);
+      const perTsubo=sa>0 ? TSUBO/sa : 0;                   // 1坪あたり換算
       $("#rl_out").innerHTML = resultBox([
         {label:"必要枚数", value:fmt(count,0), unit:"枚"},
-        {label:"1枚有効面積", value:fmt(sa,2), unit:"m²"},
-      ], "メタルラス・波形ラスは製品寸法が様々です。実寸で入力してください。ステープルは別途。")
-        + sheetDiagram(num("rl_w"), num("rl_l"), count, "枚");
+        {label:"施工面積", value:`${fmt(area,2)}㎡ ／ ${fmt(area/TSUBO,2)}坪`, unit:""},
+        {label:"有効寸法", value:`${fmt(effW*1000,0)}×${fmt(effL*1000,0)}`, unit:"mm"},
+        {label:"1枚有効面積", value:fmt(sa,3), unit:"m²"},
+        {label:"1坪あたり", value:fmt(perTsubo,2), unit:"枚/坪"},
+      ], `重ね代${fmt(num("rl_ov"),0)}mmを縦・横それぞれの寸法から差し引いた有効面積で算出しています。重ね代0mmなら平ラス約3枚/坪、ダブルラス約2枚/坪になります。ステープル・力骨は別途。`)
+        + sheetDiagram(effW, effL, count, "枚");
     },
   };
-  const swap = () => { const m=mode(); $("#r_body").innerHTML=bodies[m](); bindInputs("#r_body",calcs[m]); calcs[m](); };
+  const swap = () => {
+    const m=mode(); $("#r_body").innerHTML=bodies[m](); bindInputs("#r_body",calcs[m]);
+    // メッシュは規格を変えたら重ね代の目安も切り替える
+    if(m==="mesh"){
+      const sp=$("#rm_spec"), ov=$("#rm_ov");
+      if(sp && ov){
+        ov.value = MESH_SPECS[sp.value].ov;
+        sp.addEventListener("change", ()=>{ ov.value = MESH_SPECS[sp.value].ov; calcs.mesh(); });
+      }
+    }
+    calcs[m]();
+  };
   $("#r_mode").addEventListener("change", swap); swap();
 }
 
@@ -656,13 +708,13 @@ function renderTile(){
   const bodies = {
     adhesive: () => `
       <div class="grid2">${field("ta_area","施工面積","m²","10")}${field("ta_thick","塗り厚（くし目）","mm",null,"3")}</div>
-      <div class="grid3">${field("ta_rate","使用量","kg/m²/mm",null,"1.6")}${field("ta_bag","1袋の重量","kg",null,"20")}${loss("ta_loss","10")}</div>
+      <div class="grid3">${field("ta_rate","使用量","kg/m²/mm",null,"1.6")}${field("ta_bag","1袋の重量","kg",null,"20")}${loss("ta_loss","0")}</div>
       <div id="ta_out"></div>`,
     grout: () => `
       ${field("tg_area","施工面積","m²","10")}
       <div class="grid2">${field("tg_tw","タイル幅","mm",null,"100")}${field("tg_tl","タイル長さ","mm",null,"100")}</div>
       <div class="grid2">${field("tg_jw","目地幅","mm",null,"5")}${field("tg_jd","目地深さ","mm",null,"5")}</div>
-      <div class="grid2">${field("tg_den","比重","",null,"1.8")}${loss("tg_loss","10")}</div>
+      <div class="grid2">${field("tg_den","比重","",null,"1.8")}${loss("tg_loss","0")}</div>
       <div id="tg_out"></div>`,
   };
   const calcs = {
@@ -700,9 +752,9 @@ function bindInputs(scope, cb){
 }
 
 const TABS = [
-  {id:"plaster", label:"左官材",               render:renderPlaster},
   {id:"block",   label:"ブロック・境界・平板", render:renderBlock},
-  {id:"rebar",   label:"鉄筋・メッシュ・ラス", render:renderRebar},
+  {id:"rebar",   label:"メッシュ・鉄筋・ラス", render:renderRebar},
+  {id:"plaster", label:"左官材",               render:renderPlaster},
   {id:"tile",    label:"タイル・目地材",       render:renderTile},
 ];
 function buildTabs(){
@@ -716,7 +768,7 @@ function activate(id){
   TABS.find(t=>t.id===id).render();
 }
 buildTabs();
-activate("plaster");
+activate("block");
 </script>
 </body>
 </html>
