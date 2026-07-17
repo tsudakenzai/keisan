@@ -98,6 +98,20 @@ const fmt = (n, d=1) => (!isFinite(n) ? "-" :
 const ceilN = (n) => (isFinite(n) ? Math.ceil(n) : 0);
 const num = (id) => parseFloat($("#"+id)?.value) || 0;
 
+/* シート敷き詰めの枚数計算
+   長さ L を シート長さ s・重ね代 ov で覆うのに必要な枚数。
+   端（外周）には重ね代が不要なので、1枚目は全長を使い、
+   2枚目以降は (s - ov) ずつ進む。
+     枚数 = 1 + ceil((L - s) / (s - ov))
+*/
+function sheetsAlong(L, s, ov){
+  if(!(L>0) || !(s>0)) return 0;
+  if(L <= s) return 1;              // 1枚で足りる
+  const step = s - ov;
+  if(step <= 0) return Infinity;    // 重ね代がシート寸法以上なら不可
+  return 1 + Math.ceil((L - s) / step);
+}
+
 /* UI パーツ生成 */
 function field(id, label, unit, placeholder, value, step){
   return `<label class="field">
@@ -293,6 +307,71 @@ function sheetDiagram(sheetW, sheetL, count, unitLabel){
   return diagramWrap(`割付イメージ（${unitLabel||"枚"}を敷き詰めた例・目安）`,
     svgTag(w, h, `<rect width="${w}" height="${h}" fill="#fff"/>${cells}`),
     `<span><i style="background:${DCOL.fill2}"></i>1${unitLabel||"枚"}（${fmt(sheetW,2)}×${fmt(sheetL,2)}m）</span>`
+  );
+}
+
+/* ---- シート割付図（重ね代を色付きで表示） ----
+   W,L: 施工寸法(m) / sw,sl: シート寸法(m) / ov: 重ね代(m)
+   cols,rows: 横・縦の枚数。シートを実位置に描き、重なり部分を濃色で示す。 */
+function layoutDiagram(W, L, sw, sl, ov, cols, rows){
+  if(!(W>0)||!(L>0)||!(sw>0)||!(sl>0)||!(cols>0)||!(rows>0)) return "";
+  if(!isFinite(cols)||!isFinite(rows)) return "";
+  if(cols*rows > 400) return "";                 // 多すぎる場合は描画しない
+  const stepX = sw - ov, stepY = sl - ov;        // 2枚目以降のずらし幅
+  const coverW = sw + (cols-1)*stepX;            // 実際に覆う寸法
+  const coverL = sl + (rows-1)*stepY;
+  const maxW = 560, maxH = 420;
+  const scale = Math.min(maxW/Math.max(coverW,W), maxH/Math.max(coverL,L));
+  const pad = 26;
+  const w = Math.max(coverW,W)*scale + pad*2;
+  const h = Math.max(coverL,L)*scale + pad*2;
+  const OVC = "#e08a3c";      // 重ね部分の色
+  const SHC = "rgba(180,196,220,0.55)"; // シート本体（半透明で重なりが濃く見える）
+  const LNC = "#5a6b82";
+
+  let sheets = "";
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const x = pad + c*stepX*scale;
+      const y = pad + r*stepY*scale;
+      sheets += `<rect x="${x}" y="${y}" width="${sw*scale}" height="${sl*scale}"
+        fill="${SHC}" stroke="${LNC}" stroke-width="0.8"/>`;
+    }
+  }
+  // 重ね代の帯（縦の重なり＝列と列の間、横の重なり＝段と段の間）
+  let laps = "";
+  if(ov>0){
+    for(let c=1;c<cols;c++){
+      const x = pad + c*stepX*scale;
+      laps += `<rect x="${x}" y="${pad}" width="${ov*scale}" height="${coverL*scale}"
+        fill="${OVC}" opacity="0.75"/>`;
+    }
+    for(let r=1;r<rows;r++){
+      const y = pad + r*stepY*scale;
+      laps += `<rect x="${pad}" y="${y}" width="${coverW*scale}" height="${ov*scale}"
+        fill="${OVC}" opacity="0.75"/>`;
+    }
+  }
+  // 施工範囲の枠（点線）
+  const area = `<rect x="${pad}" y="${pad}" width="${W*scale}" height="${L*scale}"
+    fill="none" stroke="#c2410c" stroke-width="1.6" stroke-dasharray="6 4"/>`;
+  // 寸法ラベル
+  const labels = `
+    <text x="${pad + W*scale/2}" y="${pad-8}" font-size="11" fill="#4b4638" text-anchor="middle">横 ${fmt(W,2)}m（${fmt(cols,0)}枚）</text>
+    <text x="${pad-8}" y="${pad + L*scale/2}" font-size="11" fill="#4b4638" text-anchor="middle"
+      transform="rotate(-90 ${pad-8} ${pad + L*scale/2})">縦 ${fmt(L,2)}m（${fmt(rows,0)}枚）</text>`;
+
+  const legend = ov>0
+    ? `<span><i style="background:${SHC}"></i>シート</span>
+       <span><i style="background:${OVC}"></i>重ね代 ${fmt(ov*1000,0)}mm</span>
+       <span><i style="background:#fff;border:1.5px dashed #c2410c !important"></i>施工範囲</span>`
+    : `<span><i style="background:${SHC}"></i>シート（重ね代なし）</span>
+       <span><i style="background:#fff;border:1.5px dashed #c2410c !important"></i>施工範囲</span>`;
+
+  return diagramWrap(
+    `割付イメージ（${fmt(cols,0)}枚 × ${fmt(rows,0)}枚 ＝ ${fmt(cols*rows,0)}枚 ／ 覆う寸法 ${fmt(coverW,2)}×${fmt(coverL,2)}m）`,
+    svgTag(w, h, `<rect width="${w}" height="${h}" fill="#fff"/>${sheets}${laps}${area}${labels}`),
+    legend
   );
 }
 
@@ -612,13 +691,21 @@ function renderRebar(){
       ${loss("rb_loss","0")}<div id="rb_out"></div>`,
     mesh: () => `
       ${select("rm_spec","メッシュの規格",Object.keys(MESH_SPECS).map(k=>({v:k,t:MESH_SPECS[k].t})),"m60")}
-      ${field("rm_area","施工面積","m²","50")}
-      <div class="grid2">${field("rm_ov","重ね代（縦横とも）","mm",null,"150")}${loss("rm_loss","0")}</div>
+      ${select("rm_imode","入力方法",[
+        {v:"dim",  t:"寸法で入力（縦×横）※正確"},
+        {v:"area", t:"面積で入力（㎡）※概算"},
+      ],"dim")}
+      <div id="rm_in"></div>
+      <div class="grid2">${field("rm_ov","重ね代（縦横とも）","mm",null,"200")}${loss("rm_loss","0")}</div>
       <div id="rm_out"></div>`,
     lath: () => `
       ${select("rl_spec","ラスの種類",Object.keys(LATH_SPECS).map(k=>({v:k,t:LATH_SPECS[k].t})),"flat")}
-      <div class="grid2">${field("rl_area","施工面積","m²","30")}${field("rl_ov","重ね代（縦横とも）","mm",null,"0")}</div>
-      ${loss("rl_loss","0")}
+      ${select("rl_imode","入力方法",[
+        {v:"dim",  t:"寸法で入力（縦×横）※正確"},
+        {v:"area", t:"面積で入力（㎡）※概算"},
+      ],"dim")}
+      <div id="rl_in"></div>
+      <div class="grid2">${field("rl_ov","重ね代（縦横とも）","mm",null,"0")}${loss("rl_loss","0")}</div>
       <div id="rl_out"></div>`,
   };
   const calcs = {
@@ -645,36 +732,85 @@ function renderRebar(){
     },
     mesh: () => {
       const spec=MESH_SPECS[$("#rm_spec").value];
-      const ovM=num("rm_ov")/1000, l=num("rm_loss")/100;   // 重ね代 mm→m
-      // 有効寸法 = シート寸法 − 重ね代（縦横それぞれ）
-      const effW=Math.max(spec.w-ovM, 0), effL=Math.max(spec.l-ovM, 0);
-      const sa=effW*effL;                                   // 1枚の有効面積
-      const count=ceilN(sa>0?(num("rm_area")/sa)*(1+l):0);
-      $("#rm_out").innerHTML = resultBox([
+      const imode=$("#rm_imode").value;
+      const ovM=num("rm_ov")/1000, l=num("rm_loss")/100;
+      // 入力欄を方式に応じて差し替え
+      const inWrap=$("#rm_in");
+      if(inWrap && inWrap.dataset.mode!==imode){
+        inWrap.dataset.mode=imode;
+        inWrap.innerHTML = imode==="dim"
+          ? `<div class="grid2">${field("rm_W","施工幅（横）","m","5",null,"0.1")}${field("rm_L","施工長さ（縦）","m","10",null,"0.1")}</div>`
+          : field("rm_area","施工面積","m²","50");
+        bindInputs("#rm_in", calcs.mesh);
+      }
+      let rows_, cols_, count, area, note;
+      if(imode==="dim"){
+        const W=num("rm_W"), L=num("rm_L");
+        area=W*L;
+        cols_=sheetsAlong(W, spec.w, ovM);   // 横方向の枚数
+        rows_=sheetsAlong(L, spec.l, ovM);   // 縦方向の枚数
+        count=ceilN(cols_*rows_*(1+l));
+        const coverW=spec.w+(cols_-1)*(spec.w-ovM), coverL=spec.l+(rows_-1)*(spec.l-ovM);
+        note=`端（外周）には重ね代を取らない計算です。横${fmt(W,2)}mに${fmt(cols_,0)}枚、縦${fmt(L,2)}mに${fmt(rows_,0)}枚 → ${fmt(cols_,0)}×${fmt(rows_,0)}＝${fmt(cols_*rows_,0)}枚。実際に覆える寸法は${fmt(coverW,2)}×${fmt(coverL,2)}mで、はみ出す分は切って調整するか、重ね代を増やして吸収します。`;
+      } else {
+        area=num("rm_area");
+        // 面積のみの概算：端の重ね不要分は考慮できないため有効面積で割る
+        const sa=Math.max(spec.w-ovM,0)*Math.max(spec.l-ovM,0);
+        count=ceilN(sa>0?(area/sa)*(1+l):0);
+        note=`面積のみの概算です。端（外周）の重ね代を差し引けないため、実際よりやや多めに出ます。正確に拾うには「寸法で入力」をお使いください。`;
+      }
+      const rowsArr=[
         {label:"必要枚数", value:fmt(count,0), unit:"枚"},
-        {label:"シート寸法", value:`${fmt(spec.w,2)}×${fmt(spec.l,2)}`, unit:"m"},
-        {label:"有効寸法", value:`${fmt(effW,3)}×${fmt(effL,3)}`, unit:"m"},
-        {label:"1枚有効面積", value:fmt(sa,3), unit:"m²"},
-      ], `重ね代${fmt(num("rm_ov"),0)}mmを縦・横それぞれの寸法から差し引いた有効面積で算出しています。（${fmt(spec.l,2)}−${fmt(ovM,3)}）×（${fmt(spec.w,2)}−${fmt(ovM,3)}）＝${fmt(sa,3)}㎡。規格を変えると重ね代の目安も切り替わります。`)
-        + sheetDiagram(effW, effL, count, "枚");
+        {label:"シート寸法", value:`${fmt(spec.w,2)}×${fmt(spec.l,2)}m ＝ ${fmt(spec.w*spec.l,2)}㎡`, unit:""},
+      ];
+      if(imode==="dim"){
+        rowsArr.push({label:"割付", value:`横${fmt(cols_,0)}枚 × 縦${fmt(rows_,0)}枚`, unit:""});
+        rowsArr.push({label:"施工面積", value:fmt(area,2), unit:"m²"});
+      } else {
+        rowsArr.push({label:"施工面積", value:fmt(area,2), unit:"m²"});
+      }
+      $("#rm_out").innerHTML = resultBox(rowsArr, note)
+        + (imode==="dim"
+            ? layoutDiagram(num("rm_W"), num("rm_L"), spec.w, spec.l, ovM, cols_, rows_)
+            : sheetDiagram(spec.w, spec.l, count, "枚"));
     },
     lath: () => {
       const spec=LATH_SPECS[$("#rl_spec").value];
-      const ovM=num("rl_ov")/1000, l=num("rl_loss")/100;   // 重ね代 mm→m
-      // 有効寸法 = シート寸法 − 重ね代（縦横それぞれ）
-      const effW=Math.max(spec.w-ovM, 0), effL=Math.max(spec.l-ovM, 0);
-      const sa=effW*effL;                                   // 1枚の有効面積
-      const area=num("rl_area");
-      const count=ceilN(sa>0?(area/sa)*(1+l):0);
-      const perTsubo=sa>0 ? TSUBO/sa : 0;                   // 1坪あたり換算
-      $("#rl_out").innerHTML = resultBox([
+      const imode=$("#rl_imode").value;
+      const ovM=num("rl_ov")/1000, l=num("rl_loss")/100;
+      const inWrap=$("#rl_in");
+      if(inWrap && inWrap.dataset.mode!==imode){
+        inWrap.dataset.mode=imode;
+        inWrap.innerHTML = imode==="dim"
+          ? `<div class="grid2">${field("rl_W","施工幅（横）","m","3",null,"0.1")}${field("rl_L","施工長さ（縦）","m","10",null,"0.1")}</div>`
+          : field("rl_area","施工面積","m²","30");
+        bindInputs("#rl_in", calcs.lath);
+      }
+      let rows_, cols_, count, area, note;
+      if(imode==="dim"){
+        const W=num("rl_W"), L=num("rl_L");
+        area=W*L;
+        cols_=sheetsAlong(W, spec.w, ovM);
+        rows_=sheetsAlong(L, spec.l, ovM);
+        count=ceilN(cols_*rows_*(1+l));
+        const coverW=spec.w+(cols_-1)*(spec.w-ovM), coverL=spec.l+(rows_-1)*(spec.l-ovM);
+        note=`端（外周）には重ね代を取らない計算です。横${fmt(W,2)}mに${fmt(cols_,0)}枚、縦${fmt(L,2)}mに${fmt(rows_,0)}枚 → ${fmt(cols_,0)}×${fmt(rows_,0)}＝${fmt(cols_*rows_,0)}枚。実際に覆える寸法は${fmt(coverW,2)}×${fmt(coverL,2)}mで、余りは切って調整するか、重ね代で吸収します。ステープル・力骨は別途。`;
+      } else {
+        area=num("rl_area");
+        const sa=Math.max(spec.w-ovM,0)*Math.max(spec.l-ovM,0);
+        count=ceilN(sa>0?(area/sa)*(1+l):0);
+        note=`面積のみの概算です。端（外周）の重ね代を差し引けないため、実際よりやや多めに出ます。正確に拾うには「寸法で入力」をお使いください。重ね代0mmなら平ラス約3枚/坪、ダブルラス約2枚/坪。ステープル・力骨は別途。`;
+      }
+      const rowsArr=[
         {label:"必要枚数", value:fmt(count,0), unit:"枚"},
-        {label:"施工面積", value:`${fmt(area,2)}㎡ ／ ${fmt(area/TSUBO,2)}坪`, unit:""},
-        {label:"有効寸法", value:`${fmt(effW*1000,0)}×${fmt(effL*1000,0)}`, unit:"mm"},
-        {label:"1枚有効面積", value:fmt(sa,3), unit:"m²"},
-        {label:"1坪あたり", value:fmt(perTsubo,2), unit:"枚/坪"},
-      ], `重ね代${fmt(num("rl_ov"),0)}mmを縦・横それぞれの寸法から差し引いた有効面積で算出しています。重ね代0mmなら平ラス約3枚/坪、ダブルラス約2枚/坪になります。ステープル・力骨は別途。`)
-        + sheetDiagram(effW, effL, count, "枚");
+        {label:"1枚の寸法", value:`${fmt(spec.w,3)}×${fmt(spec.l,3)}m ＝ ${fmt(spec.w*spec.l,3)}㎡`, unit:""},
+      ];
+      if(imode==="dim") rowsArr.push({label:"割付", value:`横${fmt(cols_,0)}枚 × 縦${fmt(rows_,0)}枚`, unit:""});
+      rowsArr.push({label:"施工面積", value:`${fmt(area,2)}㎡ ／ ${fmt(area/TSUBO,2)}坪`, unit:""});
+      $("#rl_out").innerHTML = resultBox(rowsArr, note)
+        + (imode==="dim"
+            ? layoutDiagram(num("rl_W"), num("rl_L"), spec.w, spec.l, ovM, cols_, rows_)
+            : sheetDiagram(spec.w, spec.l, count, "枚"));
     },
   };
   const swap = () => {
