@@ -48,6 +48,16 @@
   select.full{width:100%;}
 
   .check{display:flex;flex-direction:row;align-items:center;gap:10px;margin-bottom:12px;cursor:pointer;}
+
+  /* 横ブロックの段 指定 */
+  .yk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:5px;
+    background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px;}
+  .yk-item{display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;
+    padding:4px 6px;border-radius:6px;}
+  .yk-item:hover{background:var(--accent-soft);}
+  .yk-item input{width:15px;height:15px;accent-color:var(--accent);flex-shrink:0;}
+  .yk-item.yk-dim{opacity:.5;cursor:not-allowed;}
+  .yk-item.yk-dim:hover{background:transparent;}
   .check input{width:18px;height:18px;accent-color:var(--accent);}
 
   .result{margin-top:18px;background:var(--accent-soft);border-radius:12px;padding:6px 14px;border:1px solid var(--line);}
@@ -65,6 +75,13 @@
   .spec-row{display:flex;gap:10px;font-size:11.5px;line-height:1.7;color:#4b4638;}
   .spec-row b{flex:0 0 62px;color:#6b6558;font-weight:700;}
   .spec-row span{flex:1;}
+  .maker-link{color:var(--accent);font-weight:700;text-decoration:none;border-bottom:1px solid rgba(194,65,12,.35);}
+  .maker-link:hover{border-bottom-color:var(--accent);}
+
+  /* 但し書き（重要） */
+  .disclaimer{background:#fff4e6;border:1px solid #e8b978;border-radius:9px;padding:8px 12px;margin-bottom:14px;}
+  .disclaimer p{margin:0;font-size:11.5px;line-height:1.6;color:#8a5a1a;}
+  .disclaimer b{color:#7a4a10;font-weight:700;}
 
   /* 施工イメージ図 */
   .diagram{margin-top:16px;}
@@ -75,23 +92,120 @@
   .legend i{width:13px;height:13px;border-radius:3px;display:inline-block;border:1px solid rgba(0,0,0,.15);}
 
   footer.app{font-size:11px;color:#9a9382;text-align:center;margin-top:20px;line-height:1.6;}
+
+  header.app .head-txt{flex:1;}
+  .print-btn{border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;
+    padding:9px 14px;border-radius:9px;font-size:12.5px;font-weight:700;font-family:inherit;white-space:nowrap;}
+  .print-btn:hover{background:var(--accent-soft);border-color:var(--accent);}
+  .print-foot{display:none;}
+
+/* ============ A4 印刷用（1枚に収める） ============ */
+@media print{
+  @page{ size:A4 portrait; margin:8mm; }
+
+  html,body{
+    background:#fff !important; padding:0 !important; margin:0 !important;
+    min-height:auto !important; height:auto !important;
+    font-size:8.5pt; -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .shell{max-width:100%;}
+
+  /* 画面専用は隠す */
+  .print-btn, nav.tabs{display:none !important;}
+
+  /* ヘッダー：1行に圧縮 */
+  header.app{margin-bottom:4px; padding-bottom:3px; border-bottom:1.5px solid var(--ink); gap:7px;}
+  .logo{width:22px;height:22px;border-radius:5px;font-size:7pt;}
+  .title{font-size:12pt;}
+  .sub{font-size:6.5pt;}
+
+  /* 注意書き */
+  .disclaimer{margin-bottom:4px; padding:3px 7px; border:1px solid #b0894a !important;
+    background:#fdf6ec !important; border-radius:5px; break-inside:avoid;}
+  .disclaimer p{font-size:7pt; line-height:1.35;}
+
+  /* カード */
+  .card{border:1px solid #999 !important; box-shadow:none !important; padding:6px 8px;
+    background:#fff !important; border-radius:6px;}
+  h2{font-size:10pt; margin:0 0 5px;}
+
+  /* 入力欄：ぎゅっと */
+  .field{margin-bottom:3px; gap:1px;}
+  .field-label{font-size:6.5pt;}
+  .input-wrap input, .input-wrap select{
+    padding:2px 4px; font-size:8pt; border:1px solid #aaa !important; background:#fff !important;
+    border-radius:4px; -webkit-appearance:none; appearance:none;
+  }
+  .input-wrap .unit{font-size:6pt; right:5px;}
+  .grid2, .grid3{gap:4px; margin-bottom:3px;}
+
+  /* 横ブロックの段 */
+  .yk-grid{gap:1px; padding:3px; border-radius:5px; grid-template-columns:repeat(auto-fill,minmax(84px,1fr));}
+  .yk-item{font-size:6.5pt; padding:1px 2px; gap:3px;}
+  .yk-item input{width:9px;height:9px;}
+
+  /* 製品スペック */
+  .spec{background:#f5f5f5 !important; border:1px solid #bbb !important; padding:3px 6px;
+    margin-bottom:4px; border-radius:5px; break-inside:avoid;}
+  .spec-row{font-size:6.5pt; line-height:1.3;}
+  .spec-row b{flex:0 0 44px;}
+  .maker-link{color:#333 !important; border:none !important;}
+
+  /* 計算結果 */
+  .result{background:#f7f2e8 !important; border:1px solid #8a7a5a !important; margin-top:5px;
+    padding:1px 7px; border-radius:5px; break-inside:avoid;}
+  .result-row{padding:2px 0;}
+  .result-label{font-size:7pt;}
+  .result-value{font-size:7.5pt;}
+  .result-value b{font-size:9.5pt;}
+  .note{font-size:6pt; line-height:1.3; color:#555 !important; margin:4px 1px 3px;}
+  .note.warn{background:#f7ecd9 !important; border:1px solid #b0894a !important;
+    color:#6a4a10 !important; padding:3px 5px; font-size:6pt;}
+
+  /* 施工イメージ図：高さを抑えて1枚に収める */
+  .diagram{margin-top:5px; break-inside:avoid; page-break-inside:avoid;}
+  .diagram-title{font-size:7pt; margin:0 0 3px;}
+  .diagram-wrap{overflow:visible !important; border:1px solid #999 !important; padding:4px;
+    background:#fff !important; border-radius:5px; break-inside:avoid;}
+  .diagram-wrap svg{
+    max-width:100% !important;
+    max-height:62mm !important;   /* 図が縦に伸びても1枚に収まるよう上限 */
+    height:auto !important; width:auto !important; display:block; margin:0 auto;
+  }
+  .legend{font-size:6pt; gap:7px; margin-top:3px;}
+  .legend i{width:8px;height:8px;}
+
+  /* 日付欄 */
+  .print-foot{display:flex !important; margin-top:4px; padding-top:3px;
+    border-top:1px solid #ccc; font-size:6.5pt; color:#666; justify-content:space-between;}
+
+  footer.app{font-size:6pt; margin-top:3px; color:#666 !important; line-height:1.3;}
+}
 </style>
 </head>
 <body>
 <div class="shell">
   <header class="app">
     <div class="logo">calc</div>
-    <div>
+    <div class="head-txt">
       <div class="title">建材かんたん計算</div>
       <div class="sub">面積・厚み・寸法から必要数量の目安を出します</div>
     </div>
+    <button class="print-btn" id="printBtn" type="button">🖨 印刷</button>
   </header>
 
   <nav class="tabs" id="tabs"></nav>
+
+  <div class="disclaimer">
+    <p><b>⚠ 数量はあくまで目安です。</b>発注・施工前に必ずメーカーの施工要領書をご確認ください。</p>
+  </div>
+
   <main id="main"></main>
 
+  <div class="print-foot" id="printFoot"></div>
+
   <footer class="app">
-    数値は一般的な目安です。ロス・下地・製品仕様により変動します。実発注は製品カタログでご確認ください。
+    数値はメーカーカタログに基づく目安です。発注・施工前に必ずメーカーの施工要領書をご確認ください。
   </footer>
 </div>
 
@@ -117,6 +231,19 @@ function sheetsAlong(L, s, ov){
   const step = s - ov;
   if(step <= 0) return Infinity;    // 重ね代がシート寸法以上なら不可
   return 1 + Math.ceil((L - s) / step);
+}
+
+/* 切り上げない「実数の枚数」
+   端の半端な列・段は1枚まるごとではなく、切った一部で足りる。
+   その端材は他の半端な箇所へ回すため、切り上げずに実数で数える。
+     枚数(実数) = 1 + (L - s) / (s - ov)
+*/
+function exactAlong(L, s, ov){
+  if(!(L>0) || !(s>0)) return 0;
+  if(L <= s) return L / s;          // 1枚未満で足りる分はその割合
+  const step = s - ov;
+  if(step <= 0) return Infinity;
+  return 1 + (L - s) / step;
 }
 
 /* UI パーツ生成 */
@@ -376,7 +503,7 @@ function layoutDiagram(W, L, sw, sl, ov, cols, rows){
        <span><i style="background:#fff;border:1.5px dashed #c2410c !important"></i>施工範囲</span>`;
 
   return diagramWrap(
-    `割付イメージ（${fmt(cols,0)}枚 × ${fmt(rows,0)}枚 ＝ ${fmt(cols*rows,0)}枚 ／ 覆う寸法 ${fmt(coverW,2)}×${fmt(coverL,2)}m）`,
+    `割付イメージ（横${fmt(cols,0)}枚 × 縦${fmt(rows,0)}枚 ／ 赤枠が施工範囲。はみ出す部分は切って端材を他へ回します）`,
     svgTag(w, h, `<rect width="${w}" height="${h}" fill="#fff"/>${sheets}${laps}${area}${labels}`),
     legend
   );
@@ -407,24 +534,152 @@ function rebarDiagram(barsH, barsV){
   );
 }
 
-/* ---- タイル割付図 ---- */
-function tileDiagram(tw, tl){
-  if(!(tw>0)||!(tl>0)) return "";
-  const aspect=tl/tw;
-  let cols=8, rows=Math.max(2, Math.round(cols*aspect*0.5));
-  rows=Math.min(rows,10);
-  const maxW=560, cw=Math.floor(maxW/cols), ch=Math.max(10,Math.floor(cw*aspect));
-  const gap=Math.max(2,Math.floor(cw*0.06)); // 目地
-  const w=cols*(cw+gap)+gap, h=rows*(ch+gap)+gap;
-  let cells="";
-  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
-    const x=gap+c*(cw+gap), y=gap+r*(ch+gap);
-    cells+=`<rect x="${x}" y="${y}" width="${cw}" height="${ch}" rx="1.5" fill="${DCOL.fill2}" stroke="${DCOL.line}" stroke-width="0.8"/>`;
+/* =====================================================================
+   0. 生コン・モルタル（現場調合）
+   ▼ 換算の基準（一般的な換算値）
+     生コン     1m³ … セメント280kg / 砂0.65m³ / 砕石0.65m³
+     モルタル1:3 1m³ … セメント480kg / 砂1.05m³
+   ▼ 砂・砕石 1袋 ≒ 18.11L（約25kg）／ セメント1袋 25kg
+   ▼ 配合比を変えた場合は、材料の見かけ容積の合計を保ったまま比率で按分
+===================================================================== */
+const BAG_L = 18.11;             // 砂・砕石 1袋の体積(L) ≒25kg
+const CEM_BAG = 25;              // セメント1袋(kg)
+const CEM_BULK = 480/(1.05/3);   // セメントのかさ密度(kg/m³) ≒1371
+
+// 練上がり1m³をつくるのに必要な「材料の見かけ容積の合計」
+const TOT_CONC = 280/CEM_BULK + 0.65 + 0.65;  // 生コン基準 ≒1.504（練上がり1m³に要する見かけ容積）
+const TOT_MOR  = (1.05/3) + 1.05;             // モルタル基準 ≒1.400（同上）
+
+// 配合プリセット（c:s:g の容積比）
+const MIX_PRESETS = {
+  "c123":  {t:"生コン 1:2:3（通常）",           c:1, s:2, g:3},
+  "c124":  {t:"生コン 1:2:4（基礎土間・強度重視）", c:1, s:2, g:4},
+  "c136":  {t:"生コン 1:3:6（捨てコン）",        c:1, s:3, g:6},
+  "m12":   {t:"モルタル 1:2",   c:1, s:2, g:0},
+  "m125":  {t:"モルタル 1:2.5", c:1, s:2.5, g:0},
+  "m13":   {t:"モルタル 1:3", c:1, s:3, g:0},
+  "m14":   {t:"モルタル 1:4",   c:1, s:4, g:0},
+  "m15":   {t:"モルタル 1:5",   c:1, s:5, g:0},
+  "free":  {t:"▼ 自由入力（配合比を直接指定）",  c:1, s:2, g:3, free:true},
+};
+
+// 配合比(c:s:g) → 練上がり1m³あたりの材料量
+function mixPerM3(c, s, g){
+  if(!(c>0)) return {cement:0, sand:0, gravel:0};
+  const total = (g>0) ? TOT_CONC : TOT_MOR;   // 砕石ありは生コン基準、なしはモルタル基準
+  const unit = total/(c+s+g);
+  const cVol = unit*c, sVol = unit*s, gVol = unit*g;
+  return {cement:cVol*CEM_BULK, sand:sVol, gravel:gVol};
+}
+
+function renderMix(){
+  const opts = Object.entries(MIX_PRESETS).map(([v,m])=>({v,t:m.t}));
+  $("#main").innerHTML = `<section class="card">
+    <h2>生コン・モルタル（現場調合）</h2>
+    ${select("mx_type","配合",opts,"c123")}
+    <div id="mx_ratio"></div>
+    ${select("mx_imode","入力方法",[
+      {v:"vol",  t:"体積（m³）で入力"},
+      {v:"area", t:"面積 × 厚みで入力"},
+    ],"vol")}
+    <div id="mx_in"></div>
+    ${loss("mx_loss","0")}
+    <div id="mx_out"></div>
+  </section>`;
+
+  const calc = () => {
+    const key=$("#mx_type").value, preset=MIX_PRESETS[key];
+    const l=num("mx_loss")/100;
+
+    // ---- 配合比の入力欄（プリセット選択で値をセット、自由入力なら手で変更）----
+    const rw=$("#mx_ratio");
+    if(rw && rw.dataset.key!==key){
+      rw.dataset.key=key;
+      rw.innerHTML = `<div class="field"><span class="field-label">配合比（容積比）　セメント : 砂 : 砕石　※砕石0でモルタル</span>
+        <div class="grid3">
+          ${field("mx_c","セメント","",null,String(preset.c),"0.1")}
+          ${field("mx_s","砂","",null,String(preset.s),"0.1")}
+          ${field("mx_g","砕石","",null,String(preset.g),"0.1")}
+        </div></div>`;
+      bindInputs("#mx_ratio", calc);
+    }
+    const c=num("mx_c"), sa_=num("mx_s"), g=num("mx_g");
+
+    // ---- 体積の入力欄 ----
+    const imode=$("#mx_imode").value;
+    const inWrap=$("#mx_in");
+    if(inWrap && inWrap.dataset.mode!==imode){
+      inWrap.dataset.mode=imode;
+      inWrap.innerHTML = imode==="vol"
+        ? field("mx_vol","打設・練り上がり体積","m³","1",null,"0.1")
+        : `<div class="grid2">${field("mx_area","面積","m²","10",null,"0.1")}${field("mx_thick","厚み","cm","10",null,"0.5")}</div>`;
+      bindInputs("#mx_in", calc);
+    }
+    let vol;
+    if(imode==="vol"){ vol=num("mx_vol"); }
+    else { vol=num("mx_area")*(num("mx_thick")/100); }
+    const v = vol*(1+l);
+
+    const per = mixPerM3(c, sa_, g);
+    const cemKg = per.cement*v;
+    const sandM3 = per.sand*v;
+    const gravM3 = per.gravel*v;
+    const r2 = (x)=>Math.round(x*100)/100;   // 表示する体積に丸めてから袋数を算出
+    const cemBag = ceilN(cemKg/CEM_BAG);
+    const sandBag = ceilN(r2(sandM3)*1000/BAG_L);
+    const gravBag = ceilN(r2(gravM3)*1000/BAG_L);
+
+    const isMortar = !(g>0);
+    const ratioStr = isMortar ? `1 : ${fmt(sa_/c,2)}` : `1 : ${fmt(sa_/c,2)} : ${fmt(g/c,2)}`;
+
+    const rows=[
+      {label:"練り上がり体積", value:fmt(v,2), unit:"m³"},
+      {label:"配合比（容積）", value:ratioStr, unit:""},
+      {label:"セメント", value:`${fmt(cemKg,0)}kg ／ ${fmt(cemBag,0)}袋`, unit:"(25kg)"},
+      {label:"砂", value:`${fmt(sandM3,2)}m³ ／ ${fmt(sandBag,0)}袋`, unit:"(約25kg)"},
+    ];
+    if(g>0) rows.push({label:"砕石", value:`${fmt(gravM3,2)}m³ ／ ${fmt(gravBag,0)}袋`, unit:"(約25kg)"});
+    if(imode==="area") rows.push({label:"面積 × 厚み", value:`${fmt(num("mx_area"),2)}㎡ × ${fmt(num("mx_thick"),1)}cm`, unit:""});
+
+    const warn = !(c>0) ? `<p class="note warn">⚠ セメントの比率に0より大きい数値を入れてください。</p>` : "";
+    const note = `配合比は自由に変更できます（プリセットを選んでから数値を直接書き換えてもOK）。`
+      + `砕石を0にするとモルタルとして計算します。`
+      + `袋数は セメント1袋25kg、砂・砕石1袋 約18L(約25kg) で換算しています。`
+      + `材料の見かけ容積の合計を保ったまま、指定の比率で按分して算出しています。`
+      + `水量は骨材の含水・現場状況で変わるため含めていません。`;
+
+    $("#mx_out").innerHTML = warn + resultBox(rows, note) + mixDiagram(per);
+  };
+  $("#mx_type").addEventListener("change", calc);
+  bindInputs("#main", calc);
+  calc();
+}
+
+/* ---- 配合の割合を帯グラフで表示 ---- */
+function mixDiagram(per){
+  const cVol = per.cement/CEM_BULK, sVol = per.sand, gVol = per.gravel;
+  const tot = cVol+sVol+gVol;
+  if(!(tot>0)) return "";
+  const w=560, h=76, barY=22, barH=30, pad=10;
+  const bw=w-pad*2;
+  const parts=[
+    {n:"セメント", v:cVol, c:"#6b7a8f"},
+    {n:"砂",       v:sVol, c:"#d8c9a3"},
+  ];
+  if(gVol>0) parts.push({n:"砕石", v:gVol, c:"#9aa4ae"});
+  let x=pad, bars="", labels="";
+  for(const p of parts){
+    const pw=bw*(p.v/tot);
+    bars += `<rect x="${x}" y="${barY}" width="${pw}" height="${barH}" fill="${p.c}" stroke="#7a7364" stroke-width="0.6"/>`;
+    if(pw>44) labels += `<text x="${x+pw/2}" y="${barY+barH/2+4}" font-size="11" fill="#2b2b2b" text-anchor="middle">${p.n} ${Math.round(p.v/tot*100)}%</text>`;
+    x+=pw;
   }
-  return diagramWrap(`タイル割付イメージ（${fmt(tw,0)}×${fmt(tl,0)}mm ／ 隙間＝目地）`,
-    svgTag(w, h, `<rect width="${w}" height="${h}" fill="${DCOL.line}"/>${cells}`),
-    `<span><i style="background:${DCOL.fill2}"></i>タイル</span><span><i style="background:${DCOL.line}"></i>目地</span>`
-  );
+  const legend = parts.map(p=>`<span><i style="background:${p.c}"></i>${p.n}</span>`).join("");
+  return diagramWrap(`配合イメージ（容積比）`,
+    svgTag(w,h,`<rect width="${w}" height="${h}" fill="#fff"/>
+      <text x="${pad}" y="14" font-size="10" fill="#6b6558">練り上がり1m³あたりの容積割合</text>
+      ${bars}${labels}`),
+    legend);
 }
 
 /* =====================================================================
@@ -432,52 +687,94 @@ function tileDiagram(tw, tl){
 ===================================================================== */
 const PLASTER_MATS = {
   base: {
-    t:"ベースモルタルB（豊運・25kg）",
-    bag:25,
-    // カタログ: 標準施工面積 15mm厚で約1.7㎡/袋 → 25kg ÷ (1.7㎡×15mm) = 0.980 kg/㎡/mm
-    kg:0.98,
+    t:"ベースモルタルB（豊運・25kg）", bag:25, kg:0.98,
     thick:15, thickMin:6, thickMax:20,
     water:"9〜10L／袋", mix:"約25L",
+    maker:"豊運", url:"http://www.ho-un.co.jp/",
     use:"木造住宅外壁 下地用 軽量既調合モルタル（ラス工法）",
     spec:"標準施工面積 約1.7㎡/袋（15mm厚）",
     method:"下塗り：コテ圧を掛け最低2度塗りで10mm以上。1〜2日養生（追っかけ塗りも可）。上塗り：6mm以上（準耐火1時間は7mm以上）。仕上げ塗装は夏期10日・冬期14日の養生後。",
     caution:"練混ぜは夏期1時間・冬期2時間以内に使い切る。練戻し禁止。気温5〜35℃で施工。下塗り材にサンド類を施工すると防火認定の適用外。"
   },
   sand: {
-    t:"壁モル サンドベース（マツモト・25kg）",
-    bag:25,
-    // 袋表記: 塗厚4mmで6.5㎡、6mmで4.3㎡ → 25/(6.5×4)=0.962、25/(4.3×6)=0.969 → 約0.97
-    kg:0.97,
+    t:"壁モル サンドベース（マツモト・25kg）", bag:25, kg:0.97,
     thick:6, thickMin:4, thickMax:6,
     water:"約9L／袋", mix:"—",
+    maker:"マツモト産業", url:"http://www.matsumoto-group.co.jp/",
     use:"ラス下地・コンクリート下地・ブロック下地 用 軽量既調合モルタル（下塗用）",
     spec:"施工面積 4mm厚で6.5㎡／6mm厚で4.3㎡（1袋）",
     method:"塗厚4〜6mm。コテ圧をかけながらむらなく塗付け。施工翌日は必ず散水し急激な乾燥を避ける。施工後5〜7日養生してから中塗り・上塗り。",
     caution:"コンクリート下地にはモルタル用シーラーの3倍液を塗布。強度が必要な場合はMAエマルジョン1.5kgを混入。サンドベース施工面への無理な厚付けは避ける。気温5℃以下は施工中止。"
   },
   koshi: {
-    t:"腰モルタル（豊運・25kg）",
-    bag:25,
-    // カタログ: 1袋あたり4.4〜3.1㎡（塗厚5〜7mm） → 25/(4.4×5)=1.136、25/(3.1×7)=1.152 → 約1.14
-    kg:1.14,
+    t:"腰モルタル（豊運・25kg）", bag:25, kg:1.14,
     thick:6, thickMin:5, thickMax:7,
     water:"約7〜7.5L／袋＋シーラーN#45 0.5kg", mix:"約22L",
+    maker:"豊運", url:"http://www.ho-un.co.jp/",
     use:"一般建築物 コンクリート基礎面 仕上用 既調合セメントモルタル",
     spec:"標準塗厚5〜7mm／1袋あたり4.4〜3.1㎡",
     method:"下地清掃後、シーラーN#45の3倍液（1:2）を150g/㎡塗布（塗布後24時間以内に施工）。薄くコテ圧をかけ下ごすり後、所定厚みに塗付け。刷毛引き・コテ押さえは水引き具合を見て。",
     caution:"練混ぜた材料は30分以内に使用。練戻し禁止。躯体温度5〜40℃。下ごすりを行わないとエアかみ・剥離の原因。換気口周囲は亀裂防止ネットを伏せ込む。"
   },
   shiro: {
-    t:"城かべ（田川産業・20kg）",
-    bag:20,
-    // カタログ: 標準施工面積 16.5㎡（塗厚1.5mm） → 20/(16.5×1.5)=0.808
-    kg:0.81,
+    t:"城かべ（田川産業・20kg）", bag:20, kg:0.81,
     thick:1.5, thickMin:1, thickMax:3,
     water:"14L／20kg（上塗り時）", mix:"—",
+    maker:"田川産業", url:"https://shirokabe.co.jp/",
     use:"内外装仕上げ材（既調合しっくい）※外装使用時は「城かべ油」を添加",
     spec:"標準施工面積 16.5㎡/袋（塗厚1.5mm）",
     method:"モルタル下地：城かべシーラー3倍液→城かべ中塗り(5mm)→城かべ上塗り(1.5mm)。石膏ボード下地：目地処理(ファイバーテープ＋ウチカパテ)→ウチカベース(1mm)→城かべ(1.5mm)。1回目はこすり塗り、2回目で厚みを付ける。",
     caution:"気温3℃以下は施工不可（乾燥が遅れ白華・凍害の恐れ）。乾燥まで通風をよくする。着色時は顔料800g(4%)を上限、スサ添加は20kgに対し30gを上限。"
+  },
+  mk11: {
+    t:"モルキープ #11（トクヤマ・25kg）", bag:25, kg:1.8,
+    thick:10, thickMin:5, thickMax:15,
+    water:"4.0〜4.5L／袋", mix:"—",
+    maker:"トクヤマエムテック", url:"https://www.tokuyama-mtec.co.jp/",
+    use:"内外装 コンクリート下地用 ポリマーセメントモルタル（薄塗り〜中塗り）",
+    spec:"標準使用量 約1.8kg/㎡/mm厚／標準塗厚 5〜15mm",
+    method:"下地の脆弱部・レイタンス・油分を除去し清掃。所定の水で練混ぜ、コテ圧をかけて下ごすり後、所定厚みに塗付け。厚塗りは数回に分ける。",
+    caution:"標準塗厚を守る。練混ぜ後は速やかに使用し練戻しは行わない。急激な乾燥を避け適切な養生を行う。詳細はメーカーの施工要領書を必ず確認。"
+  },
+  mk21: {
+    t:"モルキープ #21（トクヤマ・25kg）", bag:25, kg:1.8,
+    thick:10, thickMin:5, thickMax:20,
+    water:"3.8〜4.3L／袋", mix:"—",
+    maker:"トクヤマエムテック", url:"https://www.tokuyama-mtec.co.jp/",
+    use:"内外装 コンクリート下地用 ポリマーセメントモルタル（中塗り〜厚塗り）",
+    spec:"標準使用量 約1.8kg/㎡/mm厚／標準塗厚 5〜20mm",
+    method:"下地の脆弱部・レイタンス・油分を除去し清掃。所定の水で練混ぜ、コテ圧をかけて下ごすり後、所定厚みに塗付け。厚塗りは数回に分ける。",
+    caution:"標準塗厚を守る。練混ぜ後は速やかに使用し練戻しは行わない。急激な乾燥を避け適切な養生を行う。詳細はメーカーの施工要領書を必ず確認。"
+  },
+  mk30: {
+    t:"モルキープ #30（トクヤマ・25kg）", bag:25, kg:1.8,
+    thick:15, thickMin:5, thickMax:30,
+    water:"3.6〜4.1L／袋", mix:"—",
+    maker:"トクヤマエムテック", url:"https://www.tokuyama-mtec.co.jp/",
+    use:"内外装 コンクリート下地用 ポリマーセメントモルタル（厚塗り対応）",
+    spec:"標準使用量 約1.8kg/㎡/mm厚／標準塗厚 5〜30mm",
+    method:"下地の脆弱部・レイタンス・油分を除去し清掃。所定の水で練混ぜ、コテ圧をかけて下ごすり後、所定厚みに塗付け。厚塗りは数回に分ける。",
+    caution:"標準塗厚を守る。練混ぜ後は速やかに使用し練戻しは行わない。急激な乾燥を避け適切な養生を行う。詳細はメーカーの施工要領書を必ず確認。"
+  },
+  bdry: {
+    t:"Bドライ（吉野石膏・20kg）", bag:20, kg:0.862,
+    thick:8, thickMin:5, thickMax:15,
+    water:"7.5〜8.5L／袋", mix:"—",
+    maker:"吉野石膏", url:"https://yoshino-gypsum.com/",
+    use:"下塗用せっこうプラスター（骨材既調合）／ニューラスボード下地",
+    spec:"標準塗厚8mm時 7.0kg/㎡・2.9㎡/袋／塗厚範囲 5〜15mm",
+    method:"ニューラスボード下地に、所定の水量（7.5〜8.5L/袋）で練混ぜて塗付け。標準塗厚8mm。凝結時間4〜6時間。",
+    caution:"水は水道水を使用（汚れた水や塩分は硬化不良の原因）。JIS A 6904適合。詳細はメーカーの施工要領書を必ず確認。"
+  },
+  ctop: {
+    t:"C-トップ（吉野石膏・20kg）", bag:20, kg:1.333,
+    thick:5, thickMin:3, thickMax:8,
+    water:"7.5〜8.5L／袋", mix:"—",
+    maker:"吉野石膏", url:"https://yoshino-gypsum.com/",
+    use:"下塗用せっこうプラスター（高強度）／せっこうボード・普通コンクリート・コンクリートブロック・PC板・ALC板・発泡スチレン板など各種下地",
+    spec:"標準塗厚5mm時 7.0kg/㎡・3.0㎡/袋／塗厚範囲 3〜8mm",
+    method:"各種下地に、所定の水量（7.5〜8.5L/袋）で練混ぜて塗付け。標準塗厚5mm。凝結時間2〜4時間。圧縮強度10.0N/㎟以上の高強度タイプ。",
+    caution:"水は水道水を使用（汚れた水や塩分は硬化不良の原因）。JIS A 6904適合・F☆☆☆☆。詳細はメーカーの施工要領書を必ず確認。"
   },
 };
 function renderPlaster(){
@@ -508,6 +805,7 @@ function renderPlaster(){
       <div class="spec-row"><b>規格</b><span>${m.spec}</span></div>
       <div class="spec-row"><b>標準塗厚</b><span>${m.thickMin}〜${m.thickMax}mm（既定 ${m.thick}mm）</span></div>
       <div class="spec-row"><b>加水量</b><span>${m.water}${m.mix!=="—"?`　／　練上がり ${m.mix}`:""}</span></div>
+      <div class="spec-row"><b>メーカー</b><span>${m.maker}　<a class="maker-link" href="${m.url}" target="_blank" rel="noopener">公式サイトで施工要領を確認 ↗</a></span></div>
     </div>`;
   };
 
@@ -561,18 +859,19 @@ function renderBlock(){
         {v:"U",       t:"コの字（出隅2か所）"},
       ],"straight")}
       ${select("bw_type","ブロックの厚み",Object.keys(CB_TYPES).map(k=>({v:k,t:CB_TYPES[k].t})),"10")}
-      <div class="grid2">${field("bw_w","壁の総延長","m","5",null,"0.1")}${field("bw_h","壁の高さ","m","1.8",null,"0.1")}</div>
+      ${field("bw_w","壁の総延長","m","5",null,"0.1")}
+      ${select("bw_hmode","高さの指定方法",[
+        {v:"rows",   t:"積む段数で指定"},
+        {v:"height", t:"壁の高さ(m)で指定"},
+      ],"rows")}
+      <div id="bw_hin"></div>
       <div class="grid3">${field("bw_bw","ブロック長さ","mm",null,"390")}${field("bw_bh","ブロック高さ","mm",null,"190")}${field("bw_j","目地","mm",null,"10")}</div>
-      ${select("bw_ymode","横筋ブロックの配置",[
-        {v:"top",     t:"最上段（天端）のみ"},
-        {v:"interval",t:"一定段ごと"},
-      ],"top")}
-      <div class="grid2">${field("bw_yint","何段ごとに入れるか","段ごと",null,"3")}${loss("bw_loss","0")}</div>
+      <div id="bw_yoko"></div>
       ${select("bw_vspace","たて筋の間隔",[
         {v:"40",      t:"40cmごと（空洞2つに1本）"},
         {v:"80",      t:"80cmごと（空洞4つに1本）"},
       ],"40")}
-      ${field("bw_embed","たて筋の地中埋込み","cm",null,"20")}
+      <div class="grid2">${field("bw_embed","たて筋の地中埋込み","cm",null,"20")}${loss("bw_loss","0")}</div>
       <div id="bw_out"></div>`,
   };
   const calcs = {
@@ -580,31 +879,68 @@ function renderBlock(){
       const l=num("bw_loss")/100;
       const type=CB_TYPES[$("#bw_type").value];
       const uw=(num("bw_bw")+num("bw_j"))/1000, uh=(num("bw_bh")+num("bw_j"))/1000;
-      const area=num("bw_w")*num("bw_h");
-      // 段数・列数（1枚の実寸ピッチで割る）
-      const rows = uh>0 ? Math.round(num("bw_h")/uh) : 0;   // 総段数
-      const cols = uw>0 ? Math.round(num("bw_w")/uw) : 0;   // 総列数
+
+      // ---- 高さの指定方法（段数 or 高さ）を切替 ----
+      const hmode=$("#bw_hmode").value;
+      const hin=$("#bw_hin");
+      if(hin && hin.dataset.mode!==hmode){
+        hin.dataset.mode=hmode;
+        hin.innerHTML = hmode==="rows"
+          ? field("bw_rows","積む段数","段",null,"5","1")
+          : field("bw_h","壁の高さ","m","1.8",null,"0.1");
+        bindInputs("#bw_hin", calcs.block);
+      }
+      // 段数と壁高さを相互に算出
+      let rows, wallH;
+      if(hmode==="rows"){
+        rows = Math.max(0, Math.round(num("bw_rows")));
+        wallH = rows*uh;                       // 段数 → 実際の壁高さ
+      } else {
+        wallH = num("bw_h");
+        rows = uh>0 ? Math.round(wallH/uh) : 0; // 高さ → 段数
+      }
+
+      const wallW=num("bw_w");
+      const cols = uw>0 ? Math.round(wallW/uw) : 0;
       const total = rows*cols;
-      // 横筋ブロックを入れる段（r:0が最下段）の集合を決める
-      const ymode = $("#bw_ymode").value;
-      const yokoRows = new Set();
-      if(rows>0){
-        if(ymode==="top"){
-          yokoRows.add(rows-1);                    // 最上段のみ
+
+      // ---- 横ブロックの段をチェックボックスで指定 ----
+      // 既定: 天端から2段ごと（最下段は基礎に接するので並）
+      const yk=$("#bw_yoko");
+      const sig = `${rows}`;                    // 段数が変わったら作り直す
+      if(yk && yk.dataset.rows!==sig){
+        yk.dataset.rows=sig;
+        if(rows>0){
+          let boxes="";
+          for(let i=1;i<=rows;i++){            // i = 上から数えた段数
+            const rIdx = rows-i;               // r:0が最下段
+            const isBottom = (rIdx===0);
+            // 既定: 上から奇数段目(1,3,5…)に横。ただし最下段は並。
+            const def = (i%2===1) && !isBottom;
+            boxes += `<label class="yk-item${isBottom?" yk-dim":""}">
+              <input type="checkbox" class="yk-cb" data-r="${rIdx}" ${def?"checked":""} ${isBottom?"disabled":""}>
+              <span>上から${i}段目${isBottom?"（最下段）":""}</span>
+            </label>`;
+          }
+          yk.innerHTML = `<div class="field"><span class="field-label">横ブロックを入れる段（チェックした段が横筋ブロック）</span>
+            <div class="yk-grid">${boxes}</div></div>`;
+          yk.querySelectorAll(".yk-cb").forEach(cb=>cb.addEventListener("change", calcs.block));
         } else {
-          const step = Math.max(1, Math.round(num("bw_yint")));
-          // 天端を基準に、step段ごとに下へ配置（天端は必ず入れる）
-          for(let r=rows-1; r>=0; r-=step) yokoRows.add(r);
+          yk.innerHTML="";
         }
       }
+      // チェック状態を読む
+      const yokoRows = new Set();
+      (yk ? yk.querySelectorAll(".yk-cb") : []).forEach(cb=>{
+        if(cb.checked && !cb.disabled) yokoRows.add(parseInt(cb.dataset.r,10));
+      });
       const hrows = yokoRows.size;
 
-      // ---- 塀の形状 → 角ブロックの縦ライン集合 ----
+      // ---- 塀の形状 → 角ブロックの縦ライン ----
       const shape = $("#bw_shape").value;
-      const corners = shape==="L" ? 1 : (shape==="U" ? 2 : 0); // 出隅の数
+      const corners = shape==="L" ? 1 : (shape==="U" ? 2 : 0);
       const kadoCols = new Set();
-      if(cols>=1){ kadoCols.add(0); kadoCols.add(cols-1); }     // 両端は常に角
-      // 出隅は展開図の内側を等分した位置に置く
+      if(cols>=1){ kadoCols.add(0); kadoCols.add(cols-1); }
       if(corners>0 && cols>2){
         for(let i=1; i<=corners; i++){
           const cc = Math.round(cols*i/(corners+1));
@@ -613,65 +949,52 @@ function renderBlock(){
       }
       const kadoColCount = kadoCols.size;
 
-      // 角：角ライン × 全段
       const kado = kadoColCount*rows;
-      // 横：横筋段のうち、角ライン以外の中間部
       const yoko = Math.max(hrows*(cols-kadoColCount), 0);
-      // 並：残り
       const nami = Math.max(total - kado - yoko, 0);
       const applyLoss = (n)=>ceilN(n*(1+l));
       const namiL=applyLoss(nami), yokoL=applyLoss(yoko), kadoL=applyLoss(kado);
       const fillL=(namiL+yokoL+kadoL)*type.fillPerBlock;
-      const placeNote = ymode==="top"
-        ? "横筋ブロックは最上段（天端）のみ"
-        : `横筋ブロックは天端から${Math.max(1,Math.round(num("bw_yint")))}段ごと（計${hrows}段）`;
       const shapeNote = shape==="straight" ? "一直線" : (shape==="L" ? "L字（出隅1）" : "コの字（出隅2）");
+      // 積み方を上から順に文字で表現
+      let pat=[];
+      for(let i=1;i<=Math.min(rows,12);i++){ pat.push(yokoRows.has(rows-i) ? "横" : "並"); }
+      const patStr = pat.join("・") + (rows>12 ? "…" : "");
 
-      // ---- 鉄筋量の概算 ----
-      const wallW=num("bw_w"), wallH=num("bw_h");
+      // ---- 鉄筋量 ----
       const vspace=$("#bw_vspace").value;
-      const embedM = num("bw_embed")/100;          // 地中埋込み(cm→m)
-      // たて筋間隔(m)：40cm または 80cm
+      const embedM = num("bw_embed")/100;
       const pitchM = vspace==="40" ? 0.4 : 0.8;
-      // たて筋本数：端部にも入れるため +1、さらに出隅にも1本ずつ
       const vBars = (pitchM>0 && wallW>0) ? Math.floor(wallW/pitchM)+1+corners : 0;
-      // たて筋1本の長さ = 壁の高さ + 地中埋込み
       const vBarLen = wallH + embedM;
-      const vLen = vBars * vBarLen;               // たて筋 総長さ（埋込み込み・重ね継手は別途）
-      // よこ筋：横筋段ごとに壁幅いっぱい1本（出隅は通しでも継手が入るため本数は段数どおり）
+      const vLen = vBars * vBarLen;
       const hBars = hrows;
-      const hLen = hBars * wallW;                 // よこ筋 総長さ（重ね継手は別途）
-      // 図に描くたて筋の位置（実際の間隔 pitchM を図のスケールに換算）
-      // 図の1列＝uw(m)。間隔pitchMは (pitchM/uw) 列ぶん。本数は vBars に一致させる。
+      const hLen = hBars * wallW;
       const vColsArr = [];
       if(vBars>0 && cols>0 && uw>0){
-        const stepCols = pitchM/uw;                    // たて筋間隔（列単位・小数）
-        const baseBars = Math.max(vBars - corners, 0); // 等間隔ぶん（出隅を除く）
-        for(let i=0;i<baseBars;i++){
-          vColsArr.push(Math.min(i*stepCols, cols));   // 0, step, 2step, ... の小数位置
-        }
-        // 出隅の位置（角ラインのうち両端以外）にも1本ずつ追加
-        for(const kc of kadoCols){
-          if(kc!==0 && kc!==cols-1) vColsArr.push(kc);
-        }
+        const stepCols = pitchM/uw;
+        const baseBars = Math.max(vBars - corners, 0);
+        for(let i=0;i<baseBars;i++) vColsArr.push(Math.min(i*stepCols, cols));
+        for(const kc of kadoCols){ if(kc!==0 && kc!==cols-1) vColsArr.push(kc); }
       }
-      const vCols = vColsArr;  // 図へは小数位置の配列を渡す
 
       $("#bw_out").innerHTML = resultBox([
         {label:"総数量", value:fmt(namiL+yokoL+kadoL,0), unit:"個"},
         {label:"　└ 並ブロック", value:fmt(namiL,0), unit:"個"},
         {label:"　└ 横ブロック", value:fmt(yokoL,0), unit:"個"},
         {label:"　└ 角ブロック", value:fmt(kadoL,0), unit:"個"},
-        {label:"形状 ／ 段数 × 列数", value:`${shapeNote} ／ ${fmt(rows,0)} × ${fmt(cols,0)}`, unit:""},
+        {label:"段数 × 列数", value:`${fmt(rows,0)}段 × ${fmt(cols,0)}列`, unit:""},
+        {label:"壁の高さ", value:fmt(wallH,2), unit:"m"},
+        {label:"積み方（上から）", value:patStr, unit:""},
         {label:"充填モルタル(目安)", value:fmt(fillL,0), unit:"L"},
         {label:"たて筋", value:`${fmt(vBars,0)}本 ／ 総${fmt(vLen,1)}m`, unit:""},
         {label:"　└ 1本の長さ", value:`${fmt(vBarLen,2)}m（壁${fmt(wallH,2)}＋埋込${fmt(embedM,2)}）`, unit:""},
         {label:"よこ筋", value:`${fmt(hBars,0)}本 ／ 総${fmt(hLen,1)}m`, unit:""},
-      ], `${placeNote}。${shapeNote}の塀で、角ブロック＝両端＋出隅の縦ライン（計${kadoColCount}ライン×全段）、横ブロック＝横筋段の中間、残りが並。充填約${type.fillPerBlock}L/個（全充填目安）。たて筋は${vspace}cmごとに出隅分を加え${fmt(vBars,0)}本、1本あたり壁の高さ＋地中埋込み${fmt(num("bw_embed"),0)}cm。よこ筋は横筋段ごとに壁幅1本。総延長は塀を一直線に展開した長さで入力してください。重ね継手長さは別途加算してください。`)
-        + blockDiagram(rows, cols, yokoRows, vCols, kadoCols, uw/uh, wallH>0 ? embedM/wallH : 0);
-      // 「最上段のみ」の時は段間隔入力を無効化
-      const yint=$("#bw_yint");
-      if(yint){ const off=ymode==="top"; yint.disabled=off; yint.style.opacity=off?"0.45":"1"; }
+      ], `${shapeNote}の塀。角ブロック＝両端＋出隅の縦ライン（計${kadoColCount}ライン×全段）、横ブロック＝チェックした段の中間部、残りが並。`
+        + `ブロック1個＝${fmt(num("bw_bw"),0)}×${fmt(num("bw_bh"),0)}mm＋目地${fmt(num("bw_j"),0)}mm。`
+        + `充填約${type.fillPerBlock}L/個（全充填目安）。たて筋は${vspace}cmごと＋出隅分で${fmt(vBars,0)}本、1本＝壁高さ＋地中埋込み${fmt(num("bw_embed"),0)}cm。`
+        + `よこ筋は横筋段ごとに壁幅1本。総延長は塀を一直線に展開した長さ。重ね継手は別途。`)
+        + blockDiagram(rows, cols, yokoRows, vColsArr, kadoCols, uw/uh, wallH>0 ? embedM/wallH : 0);
     },
   };
   const swap = () => { const m=mode(); $("#b_body").innerHTML=bodies[m](); bindInputs("#b_body",calcs[m]); calcs[m](); };
@@ -773,45 +1096,48 @@ function renderRebar(){
       const spec=MESH_SPECS[$("#rm_spec").value];
       const imode=$("#rm_imode").value;
       const ovM=num("rm_ov")/1000, l=num("rm_loss")/100;
-      // 入力欄を方式に応じて差し替え
       const inWrap=$("#rm_in");
       if(inWrap && inWrap.dataset.mode!==imode){
         inWrap.dataset.mode=imode;
         inWrap.innerHTML = imode==="dim"
           ? `<div class="grid2">${field("rm_W","施工幅（横）","m","5",null,"0.1")}${field("rm_L","施工長さ（縦）","m","10",null,"0.1")}</div>`
-          : field("rm_area","施工面積","m²","50");
+          : field("rm_area","施工面積","m²","50",null,"0.1");
         bindInputs("#rm_in", calcs.mesh);
       }
-      let rows_, cols_, count, area, note;
+      const effW=Math.max(spec.w-ovM,0), effL=Math.max(spec.l-ovM,0);
+      const sa=effW*effL;
+      let area, W=0, L=0, cols_=0, rows_=0, exCols=0, exRows=0, exact=0, note="";
       if(imode==="dim"){
-        const W=num("rm_W"), L=num("rm_L");
-        area=W*L;
-        cols_=sheetsAlong(W, spec.w, ovM);   // 横方向の枚数
-        rows_=sheetsAlong(L, spec.l, ovM);   // 縦方向の枚数
-        count=ceilN(cols_*rows_*(1+l));
-        const coverW=spec.w+(cols_-1)*(spec.w-ovM), coverL=spec.l+(rows_-1)*(spec.l-ovM);
-        note=`端（外周）には重ね代を取らない計算です。横${fmt(W,2)}mに${fmt(cols_,0)}枚、縦${fmt(L,2)}mに${fmt(rows_,0)}枚 → ${fmt(cols_,0)}×${fmt(rows_,0)}＝${fmt(cols_*rows_,0)}枚。実際に覆える寸法は${fmt(coverW,2)}×${fmt(coverL,2)}mで、はみ出す分は切って調整するか、重ね代を増やして吸収します。`;
+        W=num("rm_W"); L=num("rm_L"); area=W*L;
+        cols_=sheetsAlong(W, spec.w, ovM);   // 割付（切上）＝並べる枚数
+        rows_=sheetsAlong(L, spec.l, ovM);
+        exCols=exactAlong(W, spec.w, ovM);   // 端を切れ端で調整した実数
+        exRows=exactAlong(L, spec.l, ovM);
+        exact = exCols*exRows*(1+l);
+        note = `割付は横${fmt(cols_,0)}枚 × 縦${fmt(rows_,0)}枚（＝${fmt(cols_*rows_,0)}枚）ですが、端の半端な列・段は1枚まるごと使わず切って納めます。`
+          + `その端材は他の半端な箇所へ回すため、実数で「横${fmt(exCols,2)} × 縦${fmt(exRows,2)} ＝ ${fmt(exact,2)}枚」として拾い、切り上げています。`
+          + `端（外周）には重ね代を取りません。重ね代${fmt(num("rm_ov"),0)}mmは縦・横それぞれの寸法から差し引いています。`;
       } else {
         area=num("rm_area");
-        // 面積のみの概算：端の重ね不要分は考慮できないため有効面積で割る
-        const sa=Math.max(spec.w-ovM,0)*Math.max(spec.l-ovM,0);
-        count=ceilN(sa>0?(area/sa)*(1+l):0);
-        note=`面積のみの概算です。端（外周）の重ね代を差し引けないため、実際よりやや多めに出ます。正確に拾うには「寸法で入力」をお使いください。`;
+        exact = sa>0 ? (area/sa)*(1+l) : 0;
+        note = `面積のみの概算です（施工面積 ${fmt(area,2)}㎡ ÷ 1枚の有効面積 ${fmt(sa,2)}㎡）。`
+          + `正確に拾うには「寸法で入力」をお使いください。`;
       }
+      const count=ceilN(exact);
       const rowsArr=[
         {label:"必要枚数", value:fmt(count,0), unit:"枚"},
         {label:"シート寸法", value:`${fmt(spec.w,2)}×${fmt(spec.l,2)}m ＝ ${fmt(spec.w*spec.l,2)}㎡`, unit:""},
+        {label:"有効寸法（重ね代引後）", value:`${fmt(effW,2)}×${fmt(effL,2)}m ＝ ${fmt(sa,2)}㎡`, unit:""},
+        {label:"施工面積", value:fmt(area,2), unit:"m²"},
       ];
       if(imode==="dim"){
-        rowsArr.push({label:"割付", value:`横${fmt(cols_,0)}枚 × 縦${fmt(rows_,0)}枚`, unit:""});
-        rowsArr.push({label:"施工面積", value:fmt(area,2), unit:"m²"});
-      } else {
-        rowsArr.push({label:"施工面積", value:fmt(area,2), unit:"m²"});
+        rowsArr.push({label:"割付（並べ方）", value:`横${fmt(cols_,0)}枚 × 縦${fmt(rows_,0)}枚`, unit:""});
+        rowsArr.push({label:"　└ 端材調整後", value:`${fmt(exact,2)} → ${fmt(count,0)}枚`, unit:""});
       }
       $("#rm_out").innerHTML = resultBox(rowsArr, note)
         + (imode==="dim"
-            ? layoutDiagram(num("rm_W"), num("rm_L"), spec.w, spec.l, ovM, cols_, rows_)
-            : sheetDiagram(spec.w, spec.l, count, "枚"));
+            ? layoutDiagram(W, L, spec.w, spec.l, ovM, cols_, rows_)
+            : sheetDiagram(effW, effL, count, "枚"));
     },
     lath: () => {
       const spec=LATH_SPECS[$("#rl_spec").value];
@@ -822,34 +1148,45 @@ function renderRebar(){
         inWrap.dataset.mode=imode;
         inWrap.innerHTML = imode==="dim"
           ? `<div class="grid2">${field("rl_W","施工幅（横）","m","3",null,"0.1")}${field("rl_L","施工長さ（縦）","m","10",null,"0.1")}</div>`
-          : field("rl_area","施工面積","m²","30");
+          : field("rl_area","施工面積","m²","30",null,"0.1");
         bindInputs("#rl_in", calcs.lath);
       }
-      let rows_, cols_, count, area, note;
+      const effW=Math.max(spec.w-ovM,0), effL=Math.max(spec.l-ovM,0);
+      const sa=effW*effL;
+      let area, W=0, L=0, cols_=0, rows_=0, exCols=0, exRows=0, exact=0, note="";
       if(imode==="dim"){
-        const W=num("rl_W"), L=num("rl_L");
-        area=W*L;
+        W=num("rl_W"); L=num("rl_L"); area=W*L;
         cols_=sheetsAlong(W, spec.w, ovM);
         rows_=sheetsAlong(L, spec.l, ovM);
-        count=ceilN(cols_*rows_*(1+l));
-        const coverW=spec.w+(cols_-1)*(spec.w-ovM), coverL=spec.l+(rows_-1)*(spec.l-ovM);
-        note=`端（外周）には重ね代を取らない計算です。横${fmt(W,2)}mに${fmt(cols_,0)}枚、縦${fmt(L,2)}mに${fmt(rows_,0)}枚 → ${fmt(cols_,0)}×${fmt(rows_,0)}＝${fmt(cols_*rows_,0)}枚。実際に覆える寸法は${fmt(coverW,2)}×${fmt(coverL,2)}mで、余りは切って調整するか、重ね代で吸収します。ステープル・力骨は別途。`;
+        exCols=exactAlong(W, spec.w, ovM);
+        exRows=exactAlong(L, spec.l, ovM);
+        exact = exCols*exRows*(1+l);
+        note = `割付は横${fmt(cols_,0)}枚 × 縦${fmt(rows_,0)}枚（＝${fmt(cols_*rows_,0)}枚）ですが、端の半端な列・段は1枚まるごと使わず切って納めます。`
+          + `その端材は他の半端な箇所へ回すため、実数で「横${fmt(exCols,2)} × 縦${fmt(exRows,2)} ＝ ${fmt(exact,2)}枚」として拾い、切り上げています。`
+          + `重ね代0mmなら平ラス約3枚/坪、ダブルラス約2枚/坪。ステープル・力骨は別途。`;
       } else {
         area=num("rl_area");
-        const sa=Math.max(spec.w-ovM,0)*Math.max(spec.l-ovM,0);
-        count=ceilN(sa>0?(area/sa)*(1+l):0);
-        note=`面積のみの概算です。端（外周）の重ね代を差し引けないため、実際よりやや多めに出ます。正確に拾うには「寸法で入力」をお使いください。重ね代0mmなら平ラス約3枚/坪、ダブルラス約2枚/坪。ステープル・力骨は別途。`;
+        exact = sa>0 ? (area/sa)*(1+l) : 0;
+        note = `面積のみの概算です（施工面積 ${fmt(area,2)}㎡ ÷ 1枚の有効面積 ${fmt(sa,3)}㎡）。`
+          + `正確に拾うには「寸法で入力」をお使いください。ステープル・力骨は別途。`;
       }
+      const count=ceilN(exact);
+      const perTsubo = sa>0 ? TSUBO/sa : 0;
       const rowsArr=[
         {label:"必要枚数", value:fmt(count,0), unit:"枚"},
-        {label:"1枚の寸法", value:`${fmt(spec.w,3)}×${fmt(spec.l,3)}m ＝ ${fmt(spec.w*spec.l,3)}㎡`, unit:""},
+        {label:"1枚の寸法", value:`${fmt(spec.w*1000,0)}×${fmt(spec.l*1000,0)}mm ＝ ${fmt(spec.w*spec.l,3)}㎡`, unit:""},
+        {label:"有効寸法（重ね代引後）", value:`${fmt(effW*1000,0)}×${fmt(effL*1000,0)}mm ＝ ${fmt(sa,3)}㎡`, unit:""},
+        {label:"施工面積", value:`${fmt(area,2)}㎡ ／ ${fmt(area/TSUBO,2)}坪`, unit:""},
+        {label:"1坪あたり", value:fmt(perTsubo,2), unit:"枚/坪"},
       ];
-      if(imode==="dim") rowsArr.push({label:"割付", value:`横${fmt(cols_,0)}枚 × 縦${fmt(rows_,0)}枚`, unit:""});
-      rowsArr.push({label:"施工面積", value:`${fmt(area,2)}㎡ ／ ${fmt(area/TSUBO,2)}坪`, unit:""});
+      if(imode==="dim"){
+        rowsArr.push({label:"割付（並べ方）", value:`横${fmt(cols_,0)}枚 × 縦${fmt(rows_,0)}枚`, unit:""});
+        rowsArr.push({label:"　└ 端材調整後", value:`${fmt(exact,2)} → ${fmt(count,0)}枚`, unit:""});
+      }
       $("#rl_out").innerHTML = resultBox(rowsArr, note)
         + (imode==="dim"
-            ? layoutDiagram(num("rl_W"), num("rl_L"), spec.w, spec.l, ovM, cols_, rows_)
-            : sheetDiagram(spec.w, spec.l, count, "枚"));
+            ? layoutDiagram(W, L, spec.w, spec.l, ovM, cols_, rows_)
+            : sheetDiagram(effW, effL, count, "枚"));
     },
   };
   const swap = () => {
@@ -868,55 +1205,6 @@ function renderRebar(){
 }
 
 /* =====================================================================
-   4. タイル張り材・目地材
-===================================================================== */
-function renderTile(){
-  $("#main").innerHTML = `<section class="card">
-    <h2>タイル張り材・目地材</h2>
-    ${select("t_mode","計算する材料",[
-      {v:"adhesive",t:"張付けモルタル・接着剤"},
-      {v:"grout",   t:"目地材"},
-    ],"adhesive")}
-    <div id="t_body"></div>
-  </section>`;
-  const mode = () => $("#t_mode").value;
-  const bodies = {
-    adhesive: () => `
-      <div class="grid2">${field("ta_area","施工面積","m²","10")}${field("ta_thick","塗り厚（くし目）","mm",null,"3")}</div>
-      <div class="grid3">${field("ta_rate","使用量","kg/m²/mm",null,"1.6")}${field("ta_bag","1袋の重量","kg",null,"20")}${loss("ta_loss","0")}</div>
-      <div id="ta_out"></div>`,
-    grout: () => `
-      ${field("tg_area","施工面積","m²","10")}
-      <div class="grid2">${field("tg_tw","タイル幅","mm",null,"100")}${field("tg_tl","タイル長さ","mm",null,"100")}</div>
-      <div class="grid2">${field("tg_jw","目地幅","mm",null,"5")}${field("tg_jd","目地深さ","mm",null,"5")}</div>
-      <div class="grid2">${field("tg_den","比重","",null,"1.8")}${loss("tg_loss","0")}</div>
-      <div id="tg_out"></div>`,
-  };
-  const calcs = {
-    adhesive: () => {
-      const l=num("ta_loss")/100, b=num("ta_bag");
-      const totalKg=num("ta_area")*num("ta_thick")*num("ta_rate")*(1+l);
-      $("#ta_out").innerHTML = resultBox([
-        {label:"必要数量", value:fmt(ceilN(b>0?totalKg/b:0),0), unit:"袋"},
-        {label:"総重量", value:fmt(totalKg,1), unit:"kg"},
-      ], "張付けモルタルの標準使用量は約1.6kg/m²/mm厚。製品(タイルエース・ワンパックボーイ等)の仕様書があればその値で再計算してください。")
-        + sectionDiagram(num("ta_thick"));
-    },
-    grout: () => {
-      const TW=num("tg_tw"), TL=num("tg_tl"), l=num("tg_loss")/100;
-      const kgM2=(TW>0&&TL>0)?(1/TW+1/TL)*num("tg_jw")*num("tg_jd")*num("tg_den"):0;
-      $("#tg_out").innerHTML = resultBox([
-        {label:"必要目地材", value:fmt(num("tg_area")*kgM2*(1+l),1), unit:"kg"},
-        {label:"1m²あたり", value:fmt(kgM2,2), unit:"kg/m²"},
-      ], "目地充填量は目地幅・深さとタイル寸法で決まります。比重は製品により1.6〜2.0程度。")
-        + tileDiagram(TW, TL);
-    },
-  };
-  const swap = () => { const m=mode(); $("#t_body").innerHTML=bodies[m](); bindInputs("#t_body",calcs[m]); calcs[m](); };
-  $("#t_mode").addEventListener("change", swap); swap();
-}
-
-/* =====================================================================
    入力バインド & タブ制御
 ===================================================================== */
 function bindInputs(scope, cb){
@@ -930,7 +1218,7 @@ const TABS = [
   {id:"block",   label:"コンクリートブロック", render:renderBlock},
   {id:"rebar",   label:"メッシュ・鉄筋・ラス", render:renderRebar},
   {id:"plaster", label:"左官材",               render:renderPlaster},
-  {id:"tile",    label:"タイル・目地材",       render:renderTile},
+  {id:"mix",     label:"生コン・モルタル",     render:renderMix},
 ];
 function buildTabs(){
   $("#tabs").innerHTML = TABS.map(t=>`<button data-id="${t.id}">${t.label}</button>`).join("");
@@ -941,7 +1229,21 @@ function buildTabs(){
 function activate(id){
   $("#tabs").querySelectorAll("button").forEach(b=>b.classList.toggle("active", b.dataset.id===id));
   TABS.find(t=>t.id===id).render();
+  CURRENT = id;
 }
+
+/* ---- 印刷 ---- */
+let CURRENT = "block";
+function setPrintFoot(){
+  const t = TABS.find(x=>x.id===CURRENT);
+  const d = new Date();
+  const ymd = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+  $("#printFoot").innerHTML =
+    `<span>${t ? t.label : ""}　計算結果</span><span>出力日：${ymd}</span>`;
+}
+$("#printBtn").addEventListener("click", ()=>{ setPrintFoot(); window.print(); });
+window.addEventListener("beforeprint", setPrintFoot);
+
 buildTabs();
 activate("block");
 </script>
