@@ -99,6 +99,23 @@
   .print-btn:hover{background:var(--accent-soft);border-color:var(--accent);}
   .print-foot{display:none;}
 
+  /* iPhone/iPad 印刷手順の案内 */
+  .ios-help{display:none; position:fixed; inset:0; background:rgba(28,36,48,.55);
+    z-index:9999; padding:18px; overflow-y:auto;}
+  .ios-help.show{display:flex; align-items:center; justify-content:center;}
+  .ios-card{background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:22px; max-width:420px; width:100%; box-shadow:0 10px 40px rgba(0,0,0,.25);}
+  .ios-card h3{font-size:16px; font-weight:800; margin:0 0 10px; letter-spacing:-.2px;}
+  .ios-lead{font-size:12.5px; line-height:1.7; color:var(--muted); margin:0 0 14px;}
+  .ios-steps{margin:0 0 14px; padding-left:20px;}
+  .ios-steps li{font-size:13px; line-height:1.9; color:#4b4638;}
+  .ios-steps b{color:var(--accent);}
+  .ios-tip{font-size:11.5px; line-height:1.7; color:#7a7364; background:#f6f2e8;
+    border:1px solid var(--line); border-radius:9px; padding:9px 11px; margin:0 0 16px;}
+  .ios-btn{width:100%; border:none; background:var(--ink); color:var(--paper); cursor:pointer;
+    padding:12px; border-radius:10px; font-size:14px; font-weight:700; font-family:inherit;}
+  .ios-btn:hover{opacity:.88;}
+
 /* ============ A4 印刷用（1枚に収める） ============ */
 @media print{
   @page{ size:A4 portrait; margin:8mm; }
@@ -111,7 +128,7 @@
   .shell{max-width:100%;}
 
   /* 画面専用は隠す */
-  .print-btn, nav.tabs{display:none !important;}
+  .print-btn, nav.tabs, .ios-help{display:none !important;}
 
   /* ヘッダー：1行に圧縮 */
   header.app{margin-bottom:4px; padding-bottom:3px; border-bottom:1.5px solid var(--ink); gap:7px;}
@@ -203,6 +220,21 @@
   <main id="main"></main>
 
   <div class="print-foot" id="printFoot"></div>
+
+  <!-- iPhone/iPad 用の印刷手順 案内 -->
+  <div class="ios-help" id="iosHelp">
+    <div class="ios-card">
+      <h3>iPhone・iPad で印刷するには</h3>
+      <p class="ios-lead">iOSのSafariでは、ボタンから直接プリンターを呼び出せません。<br>下の手順で印刷・PDF保存ができます。</p>
+      <ol class="ios-steps">
+        <li>画面下（または上）の<b>共有ボタン</b>（□に↑のマーク）をタップ</li>
+        <li>メニューを下にスクロールして<b>「プリント」</b>をタップ</li>
+        <li>プレビューを確認して<b>「プリント」</b>で印刷</li>
+      </ol>
+      <p class="ios-tip"><b>PDFで保存したいとき</b>は、手順2で「プリント」を選んだあと、プレビュー画面をピンチアウト（指2本で広げる）すると PDF になり、共有ボタンからファイル保存やメール送信ができます。</p>
+      <button class="ios-btn" id="iosClose" type="button">閉じる</button>
+    </div>
+  </div>
 
   <footer class="app">
     数値はメーカーカタログに基づく目安です。発注・施工前に必ずメーカーの施工要領書をご確認ください。
@@ -1241,7 +1273,31 @@ function setPrintFoot(){
   $("#printFoot").innerHTML =
     `<span>${t ? t.label : ""}　計算結果</span><span>出力日：${ymd}</span>`;
 }
-$("#printBtn").addEventListener("click", ()=>{ setPrintFoot(); window.print(); });
+// iOS(iPhone/iPad)のSafariは window.print() が使えないため、共有メニューからの手順を案内する
+function isIOS(){
+  const ua = navigator.userAgent || "";
+  const iOSua = /iPad|iPhone|iPod/.test(ua);
+  // iPadOSはMacと同じUAを返すことがあるのでタッチ有無でも判定
+  const iPadOS = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
+  return iOSua || iPadOS;
+}
+$("#printBtn").addEventListener("click", ()=>{
+  setPrintFoot();
+  if(isIOS()){
+    $("#iosHelp").classList.add("show");
+    return;
+  }
+  try{
+    window.print();
+  }catch(e){
+    $("#iosHelp").classList.add("show");
+  }
+});
+// 案内を閉じる
+$("#iosClose").addEventListener("click", ()=>{ $("#iosHelp").classList.remove("show"); });
+$("#iosHelp").addEventListener("click", (e)=>{
+  if(e.target.id==="iosHelp") $("#iosHelp").classList.remove("show");
+});
 window.addEventListener("beforeprint", setPrintFoot);
 
 buildTabs();
