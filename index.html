@@ -119,10 +119,11 @@
   .pv-paper{width:210mm; min-height:297mm; margin:0 auto; background:#fff;
     padding:8mm; box-sizing:border-box; box-shadow:0 3px 16px rgba(0,0,0,.4);
     color:var(--ink); font-size:8.5pt;}
+  .pv-fit{margin:0 auto;}
   /* 画面が狭いときは紙ごと縮小して全体を見せる */
   @media(max-width:840px){
     .pv-scroll{padding:8px;}
-    .pv-paper{transform:scale(var(--pv-sc,1)); transform-origin:top center;}
+    .pv-paper{transform:scale(var(--pv-sc,1)); transform-origin:top left;}
   }
 
   /* 紙の中身のスタイル（印刷時と同じ見た目） */
@@ -183,6 +184,7 @@
   /* プレビューを開いたまま印刷したら、A4の紙だけを印刷する */
   .pv-mask.show{position:static !important; display:block !important; background:#fff !important;}
   .pv-mask.show .pv-scroll{overflow:visible !important; padding:0 !important; height:auto !important;}
+  .pv-mask.show .pv-fit{width:auto !important; height:auto !important; margin:0 !important;}
   .pv-mask.show .pv-paper{
     width:auto !important; min-height:auto !important; margin:0 !important; padding:0 !important;
     box-shadow:none !important; transform:none !important;
@@ -286,11 +288,12 @@
     <div class="pv-bar">
       <span class="pv-ttl" id="pvTtl">印刷プレビュー（A4）</span>
       <span class="pv-sp"></span>
-      <button class="pv-b" id="pvPrint" type="button">🖨 このまま印刷</button>
+      <button class="pv-b" id="pvPdf" type="button">📄 PDFで保存</button>
+      <button class="pv-b" id="pvPrint" type="button">🖨 印刷</button>
       <button class="pv-b pv-x" id="pvClose" type="button">閉じる</button>
     </div>
     <p class="pv-tip" id="pvTip"></p>
-    <div class="pv-scroll"><div class="pv-paper" id="pvPaper"></div></div>
+    <div class="pv-scroll"><div class="pv-fit" id="pvFit"><div class="pv-paper" id="pvPaper"></div></div></div>
   </div>
 
   <footer class="app">
@@ -1380,32 +1383,45 @@ function buildPreview(){
   paper.appendChild(foot);
 
   // 案内文（環境で出し分け）
-  $("#pvTip").innerHTML = isIOS()
-    ? "このまま印刷するには、画面下の<b>共有ボタン（□に↑）</b>→<b>「プリント」</b>を選んでください。プレビュー画面をピンチアウトするとPDFとして保存・送信もできます。"
-    : "「このまま印刷」でプリンターに送れます。用紙はA4縦、<b>「背景のグラフィック」をオン</b>にすると色が印刷されます。";
+  const tip = $("#pvTip");
+  tip.style.background = ""; tip.style.color = ""; tip.style.fontWeight = "";
+  tip.innerHTML = isIOS()
+    ? "印刷するには、上の<b>「PDFで保存」</b>でPDFにして、Canon PRINT などのアプリで開いて印刷してください。Safariの<b>共有 → 「プリント」</b>（AirPrint）でもそのまま印刷できます。"
+    : "<b>「印刷」</b>でそのままプリンターに送れます（用紙A4縦・<b>背景のグラフィックをオン</b>で色が印刷されます）。<b>「PDFで保存」</b>でA4のPDFにも書き出せます。";
 
   // 画面が狭い場合は紙全体が見えるよう縮小
   fitPaper();
 }
 
 function fitPaper(){
-  const paper = $("#pvPaper"), sc = $(".pv-scroll");
-  if(!paper || !sc) return;
-  if(window.innerWidth > 840){ paper.style.removeProperty("--pv-sc"); return; }
+  const paper = $("#pvPaper"), fit = $("#pvFit"), sc = $(".pv-scroll");
+  if(!paper || !fit || !sc) return;
+  // 広い画面では等倍表示
+  if(window.innerWidth > 840){
+    paper.style.removeProperty("--pv-sc");
+    fit.style.width = ""; fit.style.height = "";
+    return;
+  }
+  // プレビューがまだ表示されていない（幅が測れない）ときは、表示後に再計算する
   const avail = sc.clientWidth - 16;
-  const pw = paper.offsetWidth || 794;   // 210mm ≒ 794px
-  const ratio = Math.min(1, avail/pw);
+  if(avail <= 0){ requestAnimationFrame(fitPaper); return; }
+  const pw = paper.offsetWidth || 794;    // 210mm ≒ 794px
+  const ph = paper.offsetHeight || 1123;  // 297mm ≒ 1123px
+  const ratio = Math.min(1, avail / pw);
   paper.style.setProperty("--pv-sc", ratio.toFixed(3));
-  // 縮小した分の余白を詰める
-  sc.style.height = "auto";
+  // 縮小後の実寸にラッパーを合わせ、余白（灰色部分）の崩れを防ぐ
+  fit.style.width = Math.round(pw * ratio) + "px";
+  fit.style.height = Math.ceil(ph * ratio) + "px";
 }
 
 $("#printBtn").addEventListener("click", ()=>{
   setPrintFoot();
-  buildPreview();
+  // 先にプレビューを表示してから紙を組み立てる
+  // （表示前だと画面幅が0と誤検出され、縮小率がマイナスになって紙が消えるため）
   $("#pvMask").classList.add("show");
   document.body.classList.add("pv-open");
   document.body.style.overflow = "hidden";
+  buildPreview();
 });
 $("#pvClose").addEventListener("click", ()=>{
   $("#pvMask").classList.remove("show");
@@ -1414,13 +1430,92 @@ $("#pvClose").addEventListener("click", ()=>{
 });
 $("#pvPrint").addEventListener("click", ()=>{
   if(isIOS()){
-    // iOSは印刷を呼べないので、共有メニューの案内を強調
-    const tip = $("#pvTip");
-    tip.style.background = "#ffe0b8"; tip.style.fontWeight = "700";
-    tip.scrollIntoView({behavior:"smooth", block:"nearest"});
+    showTip("iPhone / iPad では、上の<b>「PDFで保存」</b>で保存したPDFをCanon PRINT などのアプリで開いて印刷してください。Safariの<b>共有 → 「プリント」</b>（AirPrint）でもそのまま印刷できます。", true);
     return;
   }
   window.print();
+});
+
+/* ---- 案内文の表示（操作後のメッセージ差し替え） ---- */
+function showTip(msg, warn){
+  const tip = $("#pvTip");
+  if(!tip) return;
+  tip.innerHTML = msg;
+  tip.style.background = warn ? "#ffe0b8" : "#e3f3e3";
+  tip.style.color = warn ? "#8a5a1a" : "#2e6b2e";
+  tip.style.fontWeight = "700";
+}
+
+/* PDFライブラリは、ページ表示を妨げないよう「ボタンを押した時」に読み込む
+   （ページ先頭で外部スクリプトを読み込むと、通信環境によっては本体スクリプト
+   の実行が止まり、タブや計算欄が表示されなくなるため） */
+function loadScript(src){
+  return new Promise((resolve, reject)=>{
+    const s = document.createElement("script");
+    s.src = src; s.async = true;
+    s.onload = ()=>resolve();
+    s.onerror = ()=>reject(new Error("load failed: " + src));
+    document.head.appendChild(s);
+  });
+}
+let pdfLibsPromise = null;
+function ensurePdfLibs(){
+  if(window.html2canvas && window.jspdf && window.jspdf.jsPDF) return Promise.resolve();
+  if(!pdfLibsPromise){
+    pdfLibsPromise = Promise.all([
+      window.html2canvas ? null : loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"),
+      (window.jspdf && window.jspdf.jsPDF) ? null : loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"),
+    ]).catch(e=>{ pdfLibsPromise = null; throw e; });
+  }
+  return pdfLibsPromise;
+}
+
+/* ---- PDFとして保存 ----
+   Canon PRINT 等のアプリはページを読み込み直すため、プレビュー状態が消え
+   元の操作画面が印刷されてしまう。そこでプレビューをA4のPDFに書き出し、
+   そのPDFをアプリで開いて印刷してもらうことで「見たまま」を確実に印刷する。 */
+$("#pvPdf").addEventListener("click", async ()=>{
+  const btn = $("#pvPdf"), paper = $("#pvPaper");
+  const label = btn.textContent;
+  btn.textContent = "準備中…"; btn.disabled = true;
+  let holder = null;
+  try{
+    await ensurePdfLibs();
+    if(!window.html2canvas || !(window.jspdf && window.jspdf.jsPDF)){
+      throw new Error("PDF libraries unavailable");
+    }
+    btn.textContent = "作成中…";
+    // A4実寸のまま複製し、画面上の縮小の影響を受けずに描画する
+    holder = document.createElement("div");
+    holder.style.cssText = "position:fixed; left:-10000px; top:0; background:#fff;";
+    const clone = paper.cloneNode(true);
+    clone.style.transform = "none";
+    clone.style.removeProperty("--pv-sc");
+    holder.appendChild(clone);
+    document.body.appendChild(holder);
+
+    const canvas = await html2canvas(clone, {scale:2, backgroundColor:"#ffffff", useCORS:true, logging:false});
+    const img = canvas.toDataURL("image/jpeg", 0.92);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({orientation:"portrait", unit:"mm", format:"a4"});
+    const pw = 210, ph = 297;
+    const ratio = Math.min(pw / canvas.width, ph / canvas.height);
+    const w = canvas.width * ratio, h = canvas.height * ratio;
+    pdf.addImage(img, "JPEG", (pw - w) / 2, 0, w, h);
+
+    const t = TABS.find(x=>x.id===CURRENT);
+    const d = new Date();
+    const p2 = (n)=>String(n).padStart(2,"0");
+    const ymd = `${d.getFullYear()}${p2(d.getMonth()+1)}${p2(d.getDate())}`;
+    pdf.save(`建材かんたん計算_${t ? t.label : "計算結果"}_${ymd}.pdf`);
+    showTip("PDFを保存しました。Canon PRINT などのアプリで開くと、見たまま印刷できます。", false);
+  }catch(e){
+    console.error(e);
+    showTip("PDFの作成に失敗しました。インターネットに接続しているかご確認のうえ、少し時間をおいて再度お試しください。", true);
+  }finally{
+    if(holder && holder.parentNode) holder.parentNode.removeChild(holder);
+    btn.textContent = label; btn.disabled = false;
+  }
 });
 window.addEventListener("resize", ()=>{ if($("#pvMask").classList.contains("show")) fitPaper(); });
 window.addEventListener("beforeprint", setPrintFoot);
